@@ -1,0 +1,56 @@
+\ganttset{calendar week text={Wk~\currentweek}}
+\newganttchartelement{orangebar}{
+    orangebar/.style={
+        inner sep=0pt,
+        draw=pyorange,
+        fill=pyorange, 
+        very thick%,
+        %top color=white,
+        %bottom color=pyorange!80
+    },
+    orangebar label font=\slshape,
+    orangebar left shift=.1,
+    orangebar right shift=-.1
+}
+
+\newganttchartelement{bluebar}{
+    bluebar/.style={
+        inner sep=0pt,
+        draw=pyblue,
+        very thick,
+        fill=pyblue
+        %top color=white,
+        %bottom color=blue!80
+    },
+    bluebar label font=\slshape,
+    bluebar left shift=.1,
+    bluebar right shift=-.1
+}
+
+\newganttchartelement{greenbar}{
+    greenbar/.style={
+        inner sep=0pt,
+        draw=pygreen,
+        very thick,
+        fill = pygreen
+        %top color=white,
+        %bottom color=green!80
+    },
+    greenbar label font=\slshape,
+    greenbar left shift=.1,
+    greenbar right shift=-.1
+}
+
+\newganttchartelement{redbar}{
+    redbar/.style={
+        inner sep=0pt,
+        draw=pyred,
+        very thick%,
+        %top color=white,
+        %bottom color=pyred!80
+    },
+    redbar label font=\slshape,
+    redbar left shift=.1,
+    redbar right shift=-.1
+}
+
