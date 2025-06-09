@@ -15,7 +15,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{OpenWeather developments to improve urban, regional and global weather and pollution predictions and access to these predictions}
+\title{Design and Implementation of an LLM-based Weather Chatbot}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -29,49 +29,46 @@
 
 % Abstract
 \section*{Abstract}
-\blindtext  % outputs some dummy text
+In this work,
 
 % Introduction section
 \section{Introduction}
-\blindtext[3]
+Weather, as one of the most critical contextual factors following time and location, has a direct impact on our daily lives—its importance is self-evident. However, traditional weather inquiry systems mostly rely on template-based responses or keyword matching, which are insufficient to meet users’ increasingly complex and diverse needs. Therefore, building an intelligent weather assistant based on Large Language Models (LLMs) can not only significantly enhance the user experience when querying weather information, but also serve as a practical example of LLM-powered engineering applications, with potential for extension to other domains.
+
+In recent years, with the rapid advancement of LLMs in the field of natural language processing, more and more users have begun using conversational models such as ChatGPT (OpenAI, 2023) for a wide range of queries. However, many user questions require knowledge beyond the information encoded within a pre-trained LLM. For example, a user might ask, “What’s the weather like in London right now?”—a query that clearly necessitates access to up-to-date external data, which can only be retrieved via external APIs containing real-time weather information.
+
+Furthermore, integrating LLMs into real-world weather query scenarios presents a number of challenges: understanding user intent (e.g., resolving ambiguous city names or identifying whether the user wants air quality information), and invoking APIs in a structured and reliable manner to retrieve the required data.
+
+Therefore, the goal of this project is to develop a user-friendly LLM-based weather chatbot, combining advanced language model capabilities with the OpenWeather API, in order to deliver accurate, real-time weather information and related insights through natural conversation.
+
 
 % Another section
 \section{Methodology}
-In this work, we wrote a simulation package for calculating the position of a particle in vertical motion as shown in Fig.~\ref{fig:experiment}. We compute the position $y(t)$ at time $t$ using:
+\subsection{OpenWeather API}
 
-% Equation
-\begin{equation}
-    \label{eq:vertical-position}
-    y(t) = v_{0}t - \frac{1}{2}gt^{2},
-\end{equation}
+This project uses the OpenWeather One Call API 3.0 to obtain current weather conditions, hourly/daily forecasts, historical data, and weather alerts. By calling the endpoint at \url{https://api.openweathermap.org/data/3.0/onecall} and providing the geographic coordinates of a city, the system retrieves structured meteorological data to supply the agent with real-time external information support.
 
-where $v_{0}$ is the initial velocity, and $g$ is the acceleration due to the Earth's gravity.
 
-% Figure
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=0.2\textwidth]{experiment.jpg}
-    \end{center}
-    \caption{\label{fig:experiment} Particle in vertical motion.}
-\end{figure}
+\subsection{LLM Function Calling}
+Due to inherent technical limitations, large language models (LLMs) cannot directly communicate with external tools or systems. To address this, OpenAI introduced Function Calling in March 2023, enabling LLMs to interact with the real world by invoking external APIs through intermediary functions. This technique forms a key foundation in the evolution of LLMs from pure conversational tools toward fully capable AI agents.
 
-Python code we implemented for computing $y(t)$ is:
+In this project, Function Calling allows the model to automatically generate structured parameters based on user requests and invoke the OpenWeather API accordingly. As a result, the system is not only capable of understanding and generating natural language, but also able to dynamically call specific APIs or tools to fulfill more complex user needs.
 
-% Code listing
-\begin{lstlisting}[language=Python]
-def position(t, v0=0, g=9.81):
-    """Position of a particle in verticle motion."""
-    return v0*t - 0.5*g*t**2
-\end{lstlisting}
+This mechanism enhances the accuracy and personalization of the model’s responses, while supporting a closed-loop capability of perception–action–feedback, thereby enabling dynamic execution of complex tasks.
 
-We made our computational workflows reproducible using Jupyter~\cite{Beg2021}.
+
+\subsection{MCP Architecture (Model Context Protocol)}
+While traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance—making the development process complex and fragmented. To address this challenge, Anthropic introduced the Model Context Protocol (MCP) in 2024. At its core, MCP aims to decouple the LLM client from the tool service backend through a unified context protocol standard, enabling “develop once, reuse across platforms.”
+
+Compared to the synchronous and centralized nature of traditional Function Calling, MCP adopts a distributed and asynchronous architecture, supporting concurrent requests and callback-based notifications, which better aligns with real-world application needs. This project attempts to incorporate an MCP-based invocation module to improve interface generality, system modularity, and response efficiency, laying the groundwork for multi-model collaboration and complex task orchestration.
 
 \section{Expected Deliverable}
-\blindtext[3]
+
 
 \section{Future Plan}
-\blindtext[2]
+\subsection{Estimated Timeline}
 
+\subsection{Progress to Date}
 
 
 
