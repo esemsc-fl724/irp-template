@@ -29,7 +29,7 @@
 
 % Abstract
 \section*{Abstract}
-In this work,
+This project aims to build an intelligent weather chatbot using Large Language Models (LLMs) with real-time query capabilities. By leveraging OpenAI’s Function Calling, the system retrieves structured weather data from OpenWeather’s One Call API. To enhance modularity and compatibility across different models, the project further explores the Model Context Protocol (MCP), enabling asynchronous, tool-based interaction through a decoupled architecture. This work demonstrates how LLM agents can evolve into practical, extensible systems for real-world applications.
 
 % Introduction section
 \section{Introduction}
@@ -60,15 +60,49 @@ This mechanism enhances the accuracy and personalization of the model’s respon
 \subsection{MCP Architecture (Model Context Protocol)}
 While traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance—making the development process complex and fragmented. To address this challenge, Anthropic introduced the Model Context Protocol (MCP) in 2024. At its core, MCP aims to decouple the LLM client from the tool service backend through a unified context protocol standard, enabling “develop once, reuse across platforms.”
 
-Compared to the synchronous and centralized nature of traditional Function Calling, MCP adopts a distributed and asynchronous architecture, supporting concurrent requests and callback-based notifications, which better aligns with real-world application needs. This project attempts to incorporate an MCP-based invocation module to improve interface generality, system modularity, and response efficiency, laying the groundwork for multi-model collaboration and complex task orchestration.
+MCP adopts a distributed and asynchronous architecture, supporting concurrent requests and callback-based notifications, which better aligns with real-world application needs. This project attempts to incorporate an MCP-based invocation module to improve interface generality, system modularity, and response efficiency, laying the groundwork for multi-model collaboration and complex task orchestration.
 
 \section{Expected Deliverable}
+Expected Deliverables of This Project:
+	
+1. Prototype of the Intelligent Weather Chatbot System
 
+• Develop a weather dialogue system based on the OpenAI model and the OpenWeather API, supporting natural language queries for current weather, future forecasts, and weather alerts.
+
+• Enable multi-turn conversations and fuzzy city name recognition, with responses presented in either structured formats or natural language descriptions.
+
+2. Core module based on function calls
+
+• Build a set of tool functions using Function Calling to achieve structured integration with the OpenWeather API.
+
+• Design appropriate schemas and function descriptions to ensure stable and reliable API calls.
+
+3. MCP Extension Module (Exploratory)
+
+• Implement an MCP client/server framework to explore the decoupling capabilities and reusability mechanisms enabled by distributed asynchronous invocation.
+
+• Support encapsulating weather query capabilities as MCP-compatible services, enabling cross-model access.
+
+4. Project documentation and user guide.
+
+• Include general system design documents, module specifications, deployment instructions, and API usage guides.
 
 \section{Future Plan}
 \subsection{Estimated Timeline}
+• Week 1–2: Complete the first draft of the project plan, learn how to use the OpenWeather API, and read foundational articles related to LLM.
 
+• Week 3-4: Deeper dive into the OpenAI platform and Function Calling technology, and strengthen understanding of LLM engineering practices.
+
+• Weeks 5–6: Implement weather and air quality query features using function calling and achieve structured integration with the OpenWeather API.
+
+• Weeks 7-10: Explore integration of the MCP module, design a decoupled client-server architecture, and implement asynchronous tool invocation and multi-model compatibility.
+
+• Week 11–13: Finalize system integration, conduct end-to-end testing and optimization, and improve interaction efficiency and system stability.
+
+• Week 14–16: Complete project wrap-up, write the final report, and prepare presentation materials for submission of the full IRP deliverables.
+    
 \subsection{Progress to Date}
+At present, the project has completed the topic selection and initial research phase. A systematic review of the OpenWeather One Call API’s features and invocation methods has been conducted, along with basic validation tests. Meanwhile, a literature review has been carried out on two mainstream LLM tool invocation mechanisms—Function Calling and Model Context Protocol (MCP)—to understand their design principles, applicable scenarios, and engineering implementations.
 
 
 
