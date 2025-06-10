@@ -99,3 +99,12 @@
     tabsize=2
 }
 \lstset{style=mystyle}
+
+%python colours
+\definecolor{pyblue}{HTML}{1F77B4}
+\definecolor{pyorange}{HTML}{FF7F0E}
+\definecolor{pygreen}{HTML}{2CA02C}
+\definecolor{pyred}{HTML}{D62728}
+
+\usepackage{pgfgantt}  % for Gantt Chart
+\input{gantt-settings} % for Gantt Chart
