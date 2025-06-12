@@ -7,9 +7,9 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{blindtext}
-\usepackage{array}       % for >{\centering\arraybackslash}
-\usepackage{caption}     % 可选，美化 caption
-\usepackage{float}  % 放在导言区
+\usepackage{array}  
+\usepackage{caption}
+\usepackage{float}
 
 % Directory where I saved my figures.
 \graphicspath{{./figures/}}
@@ -18,7 +18,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{Design and Implementation of an LLM-based AI Weather Agent System}
+\title{OpenWeather developments to improve urban, regional and global weather and pollution predictions and access to these predictions}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -53,25 +53,29 @@ Therefore, this project aims to build an LLM-based intelligent weather assistant
 This project uses the OpenWeather One Call API 3.0 to obtain current weather conditions, hourly/daily forecasts, historical data, and weather alerts. By calling the endpoint at \url{https://api.openweathermap.org/data/3.0/onecall}~\cite{OpenWeatherAPI} and providing the geographic coordinates of a city, the system retrieves structured meteorological data to supply the agent with real-time external information support.
 
 
-\subsection{LLM Function Calling}
-Due to inherent technical limitations, large language models (LLMs) cannot directly communicate with external tools or systems. To address this, OpenAI introduced Function Calling in March 2023, enabling LLMs to interact with the real world by invoking external APIs through intermediary functions. This technique forms a key foundation in the evolution of LLMs from pure conversational tools toward fully capable AI agents.
+\subsection{Function Calling and Tool Invocation}
+Due to inherent technical limitations, large language models (LLMs) cannot directly communicate with external tools. To solve this problem, OpenAI introduced Function Calling in March 2023. This technique enables LLMs to call external tools by creating an intermediary function that bridges the model’s request and the external API, so that the model has the ability to call external tools. Function Calling is an important foundation to promote the evolution of the LLMs from a dialogue tool to an AI Agent,  which are capable of autonomously perceiving the environment, making decisions, and taking actions.
 
-In this project, Function Calling allows the model to automatically generate structured parameters based on user requests and invoke the OpenWeather API accordingly. As a result, the system is not only capable of understanding and generating natural language, but also able to dynamically call specific APIs or tools to fulfill more complex user needs.
+In this project, Function Calling enables the model to automatically generate structured parameters and call the OpenWeather API based on user requests, so that the system not only understands and generates natural language, but also calls specific APIs or tools to complete more complex tasks based on user needs. (Figure 1)
 
-This mechanism enhances the accuracy and personalization of the model’s responses, while supporting a closed-loop capability of perception–action–feedback, thereby enabling dynamic execution of complex tasks.
+Function Calling not only improves the accuracy and personalization of the model's response, but also supports a “perception–action–feedback” loop, which enables dynamic execution of complex tasks. To simplify this process, we plan to explore coordination libraries (e.g., LangChain), which provides modular support for tool-based LLM agents.
+
 
 % Figure
 \begin{figure}[H]
     \begin{center}
-        \includegraphics[width=0.5\textwidth]{latex/figures/function calling.jpeg}
+        \includegraphics[width=0.5\textwidth]{latex/figures/function calling.png}
     \end{center}
-    \caption{\label{fig:function calling} function calling}
+    \caption{\label{fig:function calling} Flowchart of Function Calling Execution}
 \end{figure}
 
-\subsection{MCP protocol (Model Context Protocol)}
-While traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance—making the development process complex and fragmented. To address this challenge, Anthropic introduced the Model Context Protocol (MCP) in 2024. At its core, MCP aims to decouple the LLM client from the tool service backend through a unified context protocol standard, enabling “develop once, reuse across platforms.”
+\subsection{MCP Protocol Integration}
+Although traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance, making the development process complex.
 
-MCP adopts a distributed and asynchronous architecture, supporting concurrent requests and callback-based notifications, which better aligns with real-world application needs. This project attempts to incorporate an MCP-based invocation module to improve interface generality, system modularity, and response efficiency, laying the groundwork for multi-model collaboration and complex task orchestration.
+To address this challenge, Anthropic released the Model Context Protocol (MCP) in November 2024, introducing a standardized and distributed architecture consisting of a Client and a Server (Figure 2). With a unified specification, the development efficiency can be greatly improved.
+
+Overall, MCP provides standardised interfaces, support for distributed and asynchronous execution, and a good developer ecosystem, and fits the real-world business needs. In this project, we plan to explore MCP-based calling modules to improve interface compatibility and response performance, and lay the foundation for multi-model collaboration and complex task scheduling.
+
 % Figure
 \begin{figure}[H]
   \centering
