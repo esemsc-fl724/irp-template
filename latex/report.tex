@@ -1,7 +1,7 @@
 % Document class `report-template` accepts either project-plan or final-report option in
 % []. This will change the title page as necessary.
-\documentclass[project-plan]{report-template}
-% \documentclass[final-report]{report-template}
+% \documentclass[project-plan]{report-template}
+\documentclass[final-report]{report-template}
 
 % Packages I use in my report.
 \usepackage{graphicx}
@@ -19,7 +19,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{OpenWeather developments to improve urban, regional and global weather and pollution predictions and access to these predictions}
+\title{OpenWeather ChatAgent: Design and Implementation of an AI Weather Assistant System}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -32,20 +32,44 @@
 \maketitlepage  % generate title page
 
 \section*{AI Acknowledgement Statement}
-I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of Large Language Models (LLMs) and commonly used technology stacks. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
+I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of large language models (LLMS), as well as to debug and test the code of my projects. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
 
 % Abstract
 \section*{Abstract}
-This project aims to design and implement an AI weather agent system powered by Large Language Models (LLMs). By integrating with the OpenWeather API, the system supports natural language queries for real-time weather. With the help of OpenAI's Function Calling, the model can dynamically interpret the user's intention and structurally call external tool functions to obtain weather data. To enhance modularity and cross-model compatibility, the project will explore the use of the Model Context Protocol (MCP). Optional extensions may include multi-model support and lightweight memory modules. The agent will be optimized in terms of intelligence, stability, and responsiveness. The final deliverables of the project include a user interface, end-to-end system integration, and full documentation. This project aims to demonstrate how LLMs can evolve from passive language generators into AI agents, providing a practical showcase of LLM-powered services in real-world applications.
+
 
 % Introduction section
-\section{Problem Description}
-Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. It is crucial to obtain timely and accurate weather information. However, traditional weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. As a result, building an AI Weather Agent powered by Large Language Models (LLMs) can not only significantly improve the user experiences, but also serve as a practical paradigm for engineering applications of LLMs that can be extended to other domains.
+\section{Introduction}
+\subsection{Problem Description and Significance}
+Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. However, traditional APIs or weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. 
 
-In recent years, with the rapid development of LLMs in natural language processing, more and more users have started to use conversational LLMs like ChatGPT (OpenAI, 2022)~\cite{OpenAI2023} for various queries. However, many user questions require knowledge beyond what a pre-trained LLM can store internally.~\cite{Zhang2023} For example, a user might ask, "What’s the weather like in London right now?" Clearly, such tasks require accessing real-time data through external APIs.~\cite{Chadha2024} The ability to interact with tools is a key step in the evolution of LLMs from passive text generators to action-capable AI agents.
+In recent years, with the rapid development of LLMs in natural language processing, more and more users have started to use conversational LLMs like ChatGPT (OpenAI, 2023)~\cite{OpenAI2023} for various queries. However, many user questions require knowledge beyond what a pre-trained LLM can store internally.~\cite{Zhang2023} For example, a user might ask, "What’s the weather like in London right now?" Clearly, such tasks require accessing real-time data through external APIs.~\cite{Chadha2024} The ability to interact with tools is a key step in the evolution of LLMs from passive text generators to action-capable AI agents.
 
-Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention (e.g., resolving ambiguous city names or distinguishing between weather and air quality queries), how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data. Additional concerns such as error handling, multi-model compatibility, and asynchronous task execution further increase system complexity.
+Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention, how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data.
 
+Building an AI Weather Assistant System based on Large Language Models (LLMs) not only can enhance the user experience, but also create a practical example for engineering applications for LLMs. These design patterns can be applied to other agent-based cases such as tourism, health and education etc.
+
+
+\subsection{Review of Existing Work}
+In my research, I have discovered several different methods for designing weather assistant systems.
+
+First, there are traditional weather information systems, which usually rely on APIs and mobile applications to provide weather data~\cite{Zhang2023}. Users must manually interpret numerical weather data, which is not user-friendly, especially in varied real-life situations.
+
+Second, some weather chatbots are built using the Rasa framework~\cite{WeatherBot2018}, which use a combination of traditional NLP, predefined rules, and API calls to deliver responses. However, the disadvantage is that it relies on predefined intents and rules, making it difficult to handle complex real-world questions.
+
+In the past two years, AI agents have become more popular. Developers can use system prompts to tell LLMs what tools are available in the system. Some weather systems~\cite{Jeong2024} have explored the integration of LLMs with weather APIs. 
+
+However, there are still some limitations. For example, the tool lists are directly embedded in the LLM prompt, making it hard to scale and maintain. Also, due to the lack of a clear standard, LLM may return incorrect formats, causing retries and extra token usage. Some well-known agents, such as Cline~\cite{Cline2025}, are using the system prompt method.
+
+After recognizing the problems with system prompts, major model providers started to introduce a more structured way of calling tools, known as Function Calling~\cite{Liu2024}~\cite{Gim2024}. Platforms like OpenAI, Claude, and Gemini~\cite{OpenAI2025}~\cite{Claude2025}~\cite{Gemini2025} have all developed their own Function Calling systems. The core idea is to register each tool using a unified JSON Schema format, and provide that to the model separately from the prompt. I have also seen some articles~\cite{Anthonio2024}~\cite{KermaniWeatherAgent2025} on implementing weather chatbot that have already started using Function Calling.
+
+Function Calling has its benefits: developers do not need to write complex prompts, the system can detect format errors and recover, and it also saves tokens by not repeating tool descriptions. However, the main drawback is the lack of a unified standard. Different providers define Function Calling differently, and some models do not natively support this feature, making tool definitions difficult to reuse.
+
+As a result, both System Prompt–based and Function Calling–based methods for defining tools currently coexist in the market.
+
+To address these issues, providers begin to explore some methods for managing tools, such as the Model Context Protocol (MCP)~\cite{Anthropic2024MCP}, which will be discussed in detail in later sections.
+
+\subsection{Objectives and Expected Deliverables}
 Therefore, this project aims to build an LLM-based AI weather agent system that can understand natural language queries, retrieve real-time weather data via the OpenWeather API~\cite{OpenWeatherAPI}, and generate informative and coherent replies to provide users with real and accurate weather data and related information.
 
 
@@ -54,160 +78,9 @@ Therefore, this project aims to build an LLM-based AI weather agent system that 
 \section{Methodology}
 \subsection{OpenWeather API}
 
-This project uses the OpenWeather One Call API to obtain current weather conditions, hourly/daily forecasts, historical data, and weather alerts. By calling the endpoint at \url{https://api.openweathermap.org/data/3.0/onecall}~\cite{OpenWeatherAPI} and providing the geographic coordinates of a city, the system retrieves structured meteorological data to supply the agent with real-time external information support.
-
-
-\subsection{Function Calling and Tool Invocation}
-Due to inherent technical limitations, large language models (LLMs) cannot directly communicate with external tools. To solve this problem, OpenAI introduced Function Calling in March 2023. This technique enables LLMs to call external tools by creating an intermediary function that bridges the model’s request and the external API, so that the model has the ability to call external tools. Function Calling~\cite{Liu2024}~\cite{Gim2024} is an important foundation to promote the evolution of the LLMs from a dialogue tool to an AI Agent,  which are capable of autonomously perceiving the environment, making decisions, and taking actions.
-
-In this project, Function Calling enables the model to automatically generate structured parameters and call the OpenWeather API based on user requests, so that the system not only understands and generates natural language, but also calls specific APIs or tools to complete more complex tasks based on user needs. (Figure 1)
-
-Function Calling not only improves the accuracy and personalization of the model's response, but also supports a “perception–action–feedback” loop, which enables dynamic execution of complex tasks. To simplify this process, we plan to explore coordination libraries~\cite{LangChainIntro}  (e.g., LangChain),which provides modular support for tool-based LLM agents.~\cite{Anthonio2024}
-
-
-% Figure
-\begin{figure}[H]
-    \begin{center}
-        \includegraphics[width=0.75\textwidth]{latex/figures/function calling.png}
-    \end{center}
-    \caption{\label{fig:function calling} Flowchart of Function Calling Execution}
-\end{figure}
-
-\subsection{MCP Protocol Integration}
-Although traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance, making the development process complex.
-
-To address this challenge, Anthropic released the Model Context Protocol (MCP) in November 2024~\cite{Anthropic2024MCP}, introducing a standardized and distributed architecture consisting of a Client and a Server (Figure 2). With a unified specification, the development efficiency can be greatly improved.~\cite{Hou2025}~\cite{Luo2025}
-
-Overall, MCP offers standardized interfaces, supports distributed and asynchronous execution, and provides a robust developer ecosystem, which fits the real-world business needs. In this project, we plan to explore the MCP protocol to improve interface compatibility and response performance, and lay the foundation for multi-model collaboration and complex task scheduling.
-
-% Figure
-\begin{figure}[H]
-  \centering
-  \fcolorbox{white}{white}{
-    \includegraphics[width=1.0\textwidth]{figures/MCP.png}
-  }
-  \caption{Structure of the MCP Protocol}
-  \label{fig:mcp}
-\end{figure}
-
-\subsection{Considerations and Limitations}
-Although extensive literature and project reviews have been conducted, the methodology section currently only outlines a preliminary system architecture, as many practical challenges may arise during development. For example, although Function Calling has the disadvantage of inconsistent format and long code, it integrates well with AI agents and can simplify system testing. The MCP protocol seems to have all the advantages, but in fact it sends a large amount of context to the LLM, and if the performance of the LLM is not good enough, there may be side effects. Additional features such as context retrieval or user profiling may also need the introduction of Retrieval-Augmented Generation (RAG)~\cite{GaoYunfan2023}. Therefore, some methods have been marked as 'exploratory' to indicate that they are options that can be investigated further.
-
-\newpage
-\section{Deliverable}
-Expected deliverables of this project:
-	
-\begin{enumerate}
-  \item \textbf{System Prototype}
-  \begin{itemize}
-    \item Build an AI Weather Agent system based on OpenAI model and OpenWeather API~\cite{Cao2024}, which supports users to query real-time weather and weather report in natural language.
-
-  \end{itemize}
-
-  \item \textbf{Baseline Module Based on Function Calling}
-  \begin{itemize}
-    \item Use OpenAI’s Function Calling mechanism to construct tool functions, achieving structured integration between the LLM and the OpenWeather API.
-
-  \end{itemize}
-
-  \item \textbf{MCP protocol (Exploratory)}
-  \begin{itemize}
-    \item Implement a basic MCP client–server architecture to decouple the LLM from tool modules, supporting asynchronous task execution.
-
-  \end{itemize}
-
-
-  \item \textbf{Functional prototype}
-  \begin{itemize}
-    \item Develop a user-friendly frontend interface that supports natural language weather queries.
-  \end{itemize}
-
-  \item \textbf{Documentation \& Deployment Package}
-  \begin{itemize}
-    \item Provide comprehensive documentation, including system architecture diagrams, module specifications, a deployment guide, and API integration instructions.
-  \end{itemize}
-
-  \item \textbf{Optional Extensions (Exploratory)}
-  \begin{itemize}
-    \item Investigate integration with other LLMs (e.g., Gemini, DeepSeek) to evaluate multi-model compatibility.
-    \item Explore context memory modules for maintaining user preferences and chat history.~\cite{LDAgent}
-    \item Optionally extend support to historical weather data queries or knowledge-augmented generation (e.g., RAG)~\cite{GaoYunfan2023}~\cite{Jeong2024}. Further literature review is required to assess feasibility.
-  \end{itemize}
-\end{enumerate}
-
-
-\section{Future Plan}
-\subsection{Estimated Timeline}
 
 
 
-\begin{figure}[H]
-\centering
-\resizebox{\textwidth}{!}{
-\begin{ganttchart}[
-    hgrid style/.style={black, dotted},
-    vgrid style/.style={*5{black,dotted}, *1{black, dotted}, *1{black, dashed}},
-    x unit=2.3mm,
-    y unit chart=9mm,
-    y unit title=10mm,
-    time slot format=isodate,
-    group label font=\bfseries \small,
-    link/.style={->, thick}
-    ]{2025-06-02}{2025-08-29}
-    \gantttitlecalendar{year, month=name, week}\\
-
-    % 准备阶段
-    \ganttgroup[group/.append style={fill=pyorange}]{Preparation Phase}{2025-06-02}{2025-06-29}\\ [grid]
-    \ganttorangebar{Project Plan \& API Study}{2025-06-02}{2025-06-15}\\ [grid]
-    \ganttorangebar{Function Calling \& LLM Engineering}{2025-06-16}{2025-06-29}\\ [grid]
-
-    % 开发阶段
-    \ganttgroup[group/.append style={fill=pyblue}]{Development Phase}{2025-06-30}{2025-08-10}\\ [grid]
-    \ganttbluebar{Weather Agent via Function Calling}{2025-06-30}{2025-07-13}\\ [grid]
-    \ganttbluebar{MCP Protocol and Exploring  Extensions}{2025-07-14}{2025-07-27}\\ [grid]
-    \ganttbluebar{System Integration \& Testing}{2025-07-28}{2025-08-10}\\ [grid]
-
-    % 论文阶段
-    \ganttgroup[group/.append style={fill=pygreen}]{Report Phase}{2025-08-11}{2025-08-29}\\ [grid]
-    \ganttgreenbar{Final Report \& Presentation}{2025-08-11}{2025-08-29}
-\end{ganttchart}
-}
-\caption{Gantt Chart of the Estimated Project Schedule}
-\label{fig:gantt}
-\end{figure}
-
-\begin{table}[H]
-  \centering
-  \small
-  \renewcommand{\arraystretch}{1.3}
-  \begin{tabular}{|p{4cm}|p{11cm}|}
-    \hline
-    \multicolumn{1}{|c|}{\textbf{Phase}} &
-    \multicolumn{1}{c|}{\textbf{Tasks}} \\
-    \hline
-    Project Setup & Complete project plan, learn OpenWeather API, read foundational LLM articles \\
-    \hline
-    LLM Engineering Foundation & Study OpenAI platform and Function Calling, strengthen LLM engineering knowledge \\
-    \hline
-    Weather Agent Implementation & Implement weather agent features using Function Calling; integrate with OpenWeather API \\
-    \hline
-    MCP and Extensions Integration & Integrate MCP protocol, design decoupled client-server architecture, implement exploratory extensions \\
-    \hline
-    System Testing & Finalize integration, conduct end-to-end testing, optimize interaction and stability \\
-    \hline
-    Project Report & Write final report, prepare presentation materials, and submit IRP deliverables \\
-    \hline
-  \end{tabular}
-  \caption{Overview of Major Tasks in Each Project Phase}
-  \label{tab:project-timeline}
-\end{table}
-
-    
-\subsection{Progress to Date}
-The project has completed the topic selection and preliminary research stages. A systematic review of the OpenWeather One Call API’s features and usage methods has been conducted, along with basic validation tests. Meanwhile, a review of the LLM tool calling mechanisms - Function Calling and Model Context Protocol (MCP) - has also been conducted to understand their design principles, applicability scenarios, and engineering implementations.
-
-\subsection{Potential Challenges and Solutions}
-Firstly, the Function Calling method used to implement the baseline version is feasible, as it has already been adopted by some existing AI agents. However, it remains to be verified whether the MCP protocol will work. If MCP does not perform well, the focus will shift to the general development of the system, which can improve in the user experience, such as improving the quality of the chatbot's response, enabling context-aware querying, and supporting user profiling features.~\cite{Anthropic2024Agents} Another potential direction is to extend the system to support historical weather data queries and related question answering.
 
 % References
 \newpage

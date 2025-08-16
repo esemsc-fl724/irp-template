@@ -1,7 +1,7 @@
 % Document class `report-template` accepts either project-plan or final-report option in
 % []. This will change the title page as necessary.
-\documentclass[project-plan]{report-template}
-% \documentclass[final-report]{report-template}
+% \documentclass[project-plan]{report-template}
+\documentclass[final-report]{report-template}
 
 % Packages I use in my report.
 \usepackage{graphicx}
@@ -19,7 +19,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{OpenWeather developments to improve urban, regional and global weather and pollution predictions and access to these predictions}
+\title{OpenWeather ChatAgent: Design and Implementation of an AI Weather Assistant System}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -32,20 +32,35 @@
 \maketitlepage  % generate title page
 
 \section*{AI Acknowledgement Statement}
-I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of Large Language Models (LLMs) and commonly used technology stacks. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
+I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of large language models (LLMS), as well as to debug and test the code of my projects. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
 
 % Abstract
 \section*{Abstract}
-This project aims to design and implement an AI weather agent system powered by Large Language Models (LLMs). By integrating with the OpenWeather API, the system supports natural language queries for real-time weather. With the help of OpenAI's Function Calling, the model can dynamically interpret the user's intention and structurally call external tool functions to obtain weather data. To enhance modularity and cross-model compatibility, the project will explore the use of the Model Context Protocol (MCP). Optional extensions may include multi-model support and lightweight memory modules. The agent will be optimized in terms of intelligence, stability, and responsiveness. The final deliverables of the project include a user interface, end-to-end system integration, and full documentation. This project aims to demonstrate how LLMs can evolve from passive language generators into AI agents, providing a practical showcase of LLM-powered services in real-world applications.
+
 
 % Introduction section
-\section{Problem Description}
-Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. It is crucial to obtain timely and accurate weather information. However, traditional weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. As a result, building an AI Weather Agent powered by Large Language Models (LLMs) can not only significantly improve the user experiences, but also serve as a practical paradigm for engineering applications of LLMs that can be extended to other domains.
+\section{Introduction}
+\subsection{Background and Problem Description}
+Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. It is crucial to obtain timely and accurate weather information. However, traditional weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. As a result, building an AI Weather Assistant System powered by Large Language Models (LLMs) can significantly improve the user experiences.
 
 In recent years, with the rapid development of LLMs in natural language processing, more and more users have started to use conversational LLMs like ChatGPT (OpenAI, 2023)~\cite{OpenAI2023} for various queries. However, many user questions require knowledge beyond what a pre-trained LLM can store internally.~\cite{Zhang2023} For example, a user might ask, "What’s the weather like in London right now?" Clearly, such tasks require accessing real-time data through external APIs.~\cite{Chadha2024} The ability to interact with tools is a key step in the evolution of LLMs from passive text generators to action-capable AI agents.
 
-Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention (e.g., resolving ambiguous city names or distinguishing between weather and air quality queries), how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data. Additional concerns such as error handling, multi-model compatibility, and asynchronous task execution further increase system complexity.
+Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention, how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data. Additional concerns such as error handling, multi-model compatibility, and asynchronous task execution further increase system complexity.
 
+
+\subsection{Significance}
+but also serve as a practical paradigm for engineering applications of LLMs that can be extended to other domains.
+
+Weather services are fundamental for human safety, productivity, and planning, especially in urban and climate-sensitive areas. However, existing weather systems struggle to meet the rising expectations for personalized, real-time, and context-aware weather information. Traditional APIs or mobile apps often lack natural conversation capabilities and adaptability to user-specific needs.
+
+This project demonstrates a practical engineering application of LLMs — not as passive question-answering bots, but as intelligent, action-capable agents capable of real-time data retrieval, semantic reasoning, and adaptive response generation. By integrating the OpenWeather API with LLM-powered tools and coordinating them via the Model Context Protocol (MCP), the project delivers a flexible, modular, and intelligent solution for real-world weather interactions.
+
+More importantly, this system showcases how state-of-the-art AI technologies — including Function Calling, ReAct-style tool orchestration, user memory, multilingual output, and vector-based retrieval (RAG) — can be combined in a production-grade weather assistant. These design patterns can be extended to many other agent-based use cases such as finance, health, and education, thus presenting broader implications beyond weather applications.
+
+\subsection{Review of Existing Work}
+
+
+\subsection{Objectives and Expected Deliverables}
 Therefore, this project aims to build an LLM-based AI weather agent system that can understand natural language queries, retrieve real-time weather data via the OpenWeather API~\cite{OpenWeatherAPI}, and generate informative and coherent replies to provide users with real and accurate weather data and related information.
 
 
@@ -136,78 +151,7 @@ Expected deliverables of this project:
 \end{enumerate}
 
 
-\section{Future Plan}
-\subsection{Estimated Timeline}
 
-
-
-\begin{figure}[H]
-\centering
-\resizebox{\textwidth}{!}{
-\begin{ganttchart}[
-    hgrid style/.style={black, dotted},
-    vgrid style/.style={*5{black,dotted}, *1{black, dotted}, *1{black, dashed}},
-    x unit=2.3mm,
-    y unit chart=9mm,
-    y unit title=10mm,
-    time slot format=isodate,
-    group label font=\bfseries \small,
-    link/.style={->, thick}
-    ]{2025-06-02}{2025-08-29}
-    \gantttitlecalendar{year, month=name, week}\\
-
-    % 准备阶段
-    \ganttgroup[group/.append style={fill=pyorange}]{Preparation Phase}{2025-06-02}{2025-06-29}\\ [grid]
-    \ganttorangebar{Project Plan \& API Study}{2025-06-02}{2025-06-15}\\ [grid]
-    \ganttorangebar{Function Calling \& LLM Engineering}{2025-06-16}{2025-06-29}\\ [grid]
-
-    % 开发阶段
-    \ganttgroup[group/.append style={fill=pyblue}]{Development Phase}{2025-06-30}{2025-08-10}\\ [grid]
-    \ganttbluebar{Weather Agent via Function Calling}{2025-06-30}{2025-07-13}\\ [grid]
-    \ganttbluebar{MCP Protocol and Exploring  Extensions}{2025-07-14}{2025-07-27}\\ [grid]
-    \ganttbluebar{System Integration \& Testing}{2025-07-28}{2025-08-10}\\ [grid]
-
-    % 论文阶段
-    \ganttgroup[group/.append style={fill=pygreen}]{Report Phase}{2025-08-11}{2025-08-29}\\ [grid]
-    \ganttgreenbar{Final Report \& Presentation}{2025-08-11}{2025-08-29}
-\end{ganttchart}
-}
-\caption{Gantt Chart of the estimated project schedule}
-\label{fig:gantt}
-\end{figure}
-
-\begin{table}[H]
-  \centering
-  \small
-  \renewcommand{\arraystretch}{1.3}
-  \begin{tabular}{|p{4cm}|p{11cm}|}
-    \hline
-    \multicolumn{1}{|c|}{\textbf{Phase}} &
-    \multicolumn{1}{c|}{\textbf{Tasks}} \\
-    \hline
-    Project Setup & Complete project plan, learn OpenWeather API, read foundational LLM articles \\
-    \hline
-    LLM Engineering Foundation & Study OpenAI platform and Function Calling, strengthen LLM engineering knowledge \\
-    \hline
-    Weather Agent Implementation & Implement weather agent features using Function Calling; integrate with OpenWeather API \\
-    \hline
-    MCP and Extensions Integration & Integrate MCP protocol, design decoupled client-server architecture, implement exploratory extensions \\
-    \hline
-    System Testing & Finalize integration, conduct end-to-end testing, optimize interaction and stability \\
-    \hline
-    Project Report & Write final report, prepare presentation materials, and submit IRP deliverables \\
-    \hline
-  \end{tabular}
-  \caption{Overview of Major Tasks in Each Project Phase}
-  \label{tab:project-timeline}
-\end{table}
-
-    
-\subsection{Progress to Date}
-The project has completed the topic selection and preliminary research stages. A systematic review of the OpenWeather One Call API’s features and usage methods has been conducted, along with basic validation tests. Meanwhile, a review of the LLM tool calling mechanisms - Function Calling and Model Context Protocol (MCP) - has also been conducted to understand their design principles, applicability scenarios, and engineering implementations.
-
-\subsection{Potential Challenges and Solutions}
-Firstly, the Function Calling method used to implement the baseline version is feasible, as it has already been adopted by some existing AI agents. However, it remains to be verified whether the MCP protocol will work. If MCP does not perform well, the focus will shift to the general development of the system, which can improve in the user experience, such as improving the quality of the chatbot's response, enabling context-aware querying, and supporting user profiling features.~\cite{Anthropic2024Agents} Another potential direction is to extend the system to support historical weather data queries and related question answering.
 
 % References
 \newpage
