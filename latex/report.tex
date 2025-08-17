@@ -31,14 +31,19 @@
 
 \maketitlepage  % generate title page
 
+% Table of Contents page
+\tableofcontents
+\newpage   % Break page, separate page after table of contents
+
 \section*{AI Acknowledgement Statement}
 I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of large language models (LLMS), as well as to debug and test the code of my projects. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
 
 % Abstract
 \section*{Abstract}
-
+This project aims to design and implement an AI weather agent system powered by Large Language Models (LLMs). By integrating with the OpenWeather API, the system supports natural language queries for real-time weather. With the help of OpenAI's Function Calling, the model can dynamically interpret the user's intention and structurally call external tool functions to obtain weather data. To enhance modularity and cross-model compatibility, the project will explore the use of the Model Context Protocol (MCP). Optional extensions may include multi-model support and lightweight memory modules. The agent will be optimized in terms of intelligence, stability, and responsiveness. The final deliverables of the project include a user interface, end-to-end system integration, and full documentation. This project aims to demonstrate how LLMs can evolve from passive language generators into AI agents, providing a practical showcase of LLM-powered services in real-world applications.
 
 % Introduction section
+\newpage
 \section{Introduction}
 \subsection{Problem Description and Significance}
 Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. However, traditional APIs or weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. 
@@ -69,12 +74,24 @@ As a result, both System Prompt–based and Function Calling–based methods for
 
 To address these issues, providers begin to explore some methods for managing tools, such as the Model Context Protocol (MCP)~\cite{Anthropic2024MCP}, which will be discussed in detail in later sections.
 
-\subsection{Objectives and Expected Deliverables}
-Therefore, this project aims to build an LLM-based AI weather agent system that can understand natural language queries, retrieve real-time weather data via the OpenWeather API~\cite{OpenWeatherAPI}, and generate informative and coherent replies to provide users with real and accurate weather data and related information.
+\subsection{Objectives}
+This project aims to develop a practical intelligent weather assistant system based on large language models (LLMs), supporting natural language interaction, real-time weather data queries, and personalized weather reports.
+
+The system is designed to integrate multiple modules, including intelligent location, weather query, stylized output and memory modules, etc. The system supports multilingual conversations, multiple output styles, and user preference recognition. It also supports short-term and long-term memory. To enhance multi-model compatibility and maintainability, this project adopts the MCP (Model Context Protocol) protocol for unified tool registration and combines RAG (Retrieval-Augmented Generation)~\cite{Jeong2024}~\cite{GaoYunfan2023} for knowledge enhancement.
+
+The following deliverables are expected from the project:
+
+\begin{itemize}
+  \item A working intelligent weather chatbot system, supporting both command-line and web-based interaction, integrated with LLMs and the OpenWeather API~\cite{OpenWeatherAPI}.
+  \item A modular toolset based on the MCP protocol, supporting services such as weather, location and map visualization.
+  \item A series of personalized features for system expansion.
+  \item Evaluate the feasibility of the method and quantify the improvement in performance.
+\end{itemize}
 
 
 
 % Another section
+\newpage
 \section{Methodology}
 \subsection{OpenWeather API}
 

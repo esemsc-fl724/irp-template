@@ -2,6 +2,7 @@
 \ProvidesPackage{report-template}[2021/06/04 v1.0 Macros for report]
 
 \LoadClass[a4paper, 11pt]{article}
+% \LoadClass[a4paper,11pt]{report}
 
 \RequirePackage[a4paper, hmargin=25mm, vmargin=25mm]{geometry}
 \RequirePackage[utf8]{inputenc}
@@ -25,11 +26,13 @@
 \def\repository#1{\def\@repository{#1}}
 
 % sans-serif font
+\usepackage{lmodern} 
 % \renewcommand{\familydefault}{\sfdefault}
-\renewcommand{\familydefault}{phv}
+% \renewcommand{\familydefault}{phv}
+\renewcommand{\familydefault}{ptm}
 
 % Class options
-\DeclareOption{project-plan}{\newcommand{\doctype}{Project Plan}}
+% \DeclareOption{project-plan}{\newcommand{\doctype}{Project Plan}}
 \DeclareOption{final-report}{\newcommand{\doctype}{Final Report}}
 \ProcessOptions\relax
 
@@ -105,6 +108,7 @@
 \definecolor{pyorange}{HTML}{FF7F0E}
 \definecolor{pygreen}{HTML}{2CA02C}
 \definecolor{pyred}{HTML}{D62728}
+
 
 \usepackage{pgfgantt}  % for Gantt Chart
 \input{gantt-settings} % for Gantt Chart
