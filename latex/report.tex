@@ -3,6 +3,7 @@
 % \documentclass[project-plan]{report-template}
 \documentclass[final-report]{report-template}
 
+
 % Packages I use in my report.
 \usepackage{graphicx}
 \usepackage{amsmath}
@@ -19,7 +20,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{OpenWeather ChatAgent: Design and Implementation of an AI Weather Assistant System}
+\title{OpenWeather ChatAgent: Design and Implementation of an LLM-Based Weather Assistant System}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -66,26 +67,27 @@ In the past two years, AI agents have become more popular. Developers can use sy
 
 However, there are still some limitations. For example, the tool lists are directly embedded in the LLM prompt, making it hard to scale and maintain. Also, due to the lack of a clear standard, LLM may return incorrect formats, causing retries and extra token usage. Some well-known agents, such as Cline~\cite{Cline2025}, are using the system prompt method.
 
-After recognizing the problems with system prompts, major model providers started to introduce a more structured way of calling tools, known as Function Calling~\cite{Liu2024}~\cite{Gim2024}. Platforms like OpenAI, Claude, and Gemini~\cite{OpenAI2025}~\cite{Claude2025}~\cite{Gemini2025} have all developed their own Function Calling systems. The core idea is to register each tool using a unified JSON Schema format, and provide that to the model separately from the prompt. I have also seen some articles~\cite{Anthonio2024}~\cite{KermaniWeatherAgent2025} on implementing weather chatbot that have already started using Function Calling.
+After recognizing the problems with system prompts, major model providers started to introduce a more structured way of calling tools, known as Function Calling~\cite{Liu2024}~\cite{Gim2024}. Platforms like OpenAI~\cite{OpenAI2025}, Claude~\cite{Claude2025}, and Gemini~\cite{Gemini2025} have all developed their own Function Calling systems. The core idea is to register each tool using a unified JSON Schema format, and provide that to the model separately from the prompt. I have also seen some articles~\cite{Anthonio2024}~\cite{KermaniWeatherAgent2025} on implementing weather chatbot that have already started using Function Calling.
 
 Function Calling has its benefits: developers do not need to write complex prompts, the system can detect format errors and recover, and it also saves tokens by not repeating tool descriptions. However, the main drawback is the lack of a unified standard. Different providers define Function Calling differently, and some models do not natively support this feature, making tool definitions difficult to reuse.
 
 As a result, both System Prompt–based and Function Calling–based methods for defining tools currently coexist in the market.
 
-To address these issues, providers begin to explore some methods for managing tools, such as the Model Context Protocol (MCP)~\cite{Anthropic2024MCP}, which will be discussed in detail in later sections.
+To address these issues, providers begin to explore some methods for managing tools, such as the Model Context Protocol~\cite{Anthropic2024MCP}, which will be discussed in detail in later sections.
 
 \subsection{Objectives}
 This project aims to develop a practical intelligent weather assistant system based on large language models (LLMs), supporting natural language interaction, real-time weather data queries, and personalized weather reports.
 
-The system is designed to integrate multiple modules, including intelligent location, weather query, stylized output and memory modules, etc. The system supports multilingual conversations, multiple output styles, and user preference recognition. It also supports short-term and long-term memory. To enhance multi-model compatibility and maintainability, this project adopts the MCP (Model Context Protocol) protocol for unified tool registration and combines RAG (Retrieval-Augmented Generation)~\cite{Jeong2024}~\cite{GaoYunfan2023} for knowledge enhancement.
+The system is designed to integrate multiple modules, including intelligent location, weather query, stylized output and memory modules, etc. The system supports multilingual conversations, multiple output styles, and user preference recognition. It also supports short-term and long-term memory. To enhance multi-model compatibility and maintainability, this project adopts the Model Context Protocol (MCP) for unified tool registration and combines Retrieval-Augmented Generation (RAG)~\cite{Jeong2024}~\cite{GaoYunfan2023} for knowledge enhancement.
 
 The following deliverables are expected from the project:
 
 \begin{itemize}
   \item A working intelligent weather chatbot system, supporting both command-line and web-based interaction, integrated with LLMs and the OpenWeather API~\cite{OpenWeatherAPI}.
   \item A modular toolset based on the MCP protocol, supporting services such as weather, location and map visualization.
-  \item A series of personalized features for system expansion.
+  % \item A series of personalized features for system expansion.
   \item Evaluate the feasibility of the method and quantify the improvement in performance.
+  % \item A complete project report, source code, demonstration video, and deployment documentation for reproducibility and delivery.
 \end{itemize}
 
 
@@ -93,9 +95,79 @@ The following deliverables are expected from the project:
 % Another section
 \newpage
 \section{Methodology}
-\subsection{OpenWeather API}
+\subsection{System Architecture and Technology Stack}
+
+The system for this project adopts a microservice architecture and uses the Model Context Protocol (MCP) to manage various tools and services. The core framework is built on a combination of LLM, MCP, and RAG, which shows the popular trends in AI Agent. The system is divided into four core layers, each with clear responsibilities and interface definitions, in accordance with back-end development standards.
 
 
+\textbf{LLM-driven layer (Agent):}
+This layer uses models such as OpenAI GPT~\cite{OpenAI2025} or DeepSeek~\cite{DeepSeek2025} as the main reasoning engine. The main reason for this choice is that it supports Function Calling, which simplifies tool invocation. This layer is responsible for understanding the intentions of the users, planning the execution steps, and coordinating calls to external tools. The entire reasoning process is implemented using LangGraph~\cite{LangGraph2025}, following ReAct-style process, which has good traceability and execution control capabilities.
+
+\textbf{MCP tools layer (MCP server):}
+It is the core integration layer of the system. Weather-related tools are mainly managed through the MCP protocol. This layer supports dynamic discovery, registration, and execution of tools, providing a standardized tool interface for LLM agents.
+
+\textbf{RAG knowledge layer:}
+Using a locally deployed ChromaDB vector database~\cite{Chroma2025}, build collections such as weather knowledge and city information. Combine the Sentence Transformers embedding model to achieve fast semantic retrieval and knowledge enhancement, thus improving the accuracy of system responses.
+
+
+\textbf{User interface layer:}
+This project separates the front-end and back-end. The front-end is responsible for calling the back-end interface. The front-end uses Streamlit~\cite{Streamlit2025} to implement a modern web interface that supports streaming output. The interface is visually appealing and does not require users to operate on the command-line, improving the user experience.
+
+\subsection{Model Context Protocol (MCP)}
+\subsubsection{The Dilemma of Function Calling}
+
+\subsubsection{Technical Architecture and Core Advantages of the MCP Protocol}
+
+
+\subsection{Agent Design}
+AI agent is a software system that can perceive its environment, make decisions, and take actions to achieve specific goals. It uses artificial intelligence techniques to act on behalf of users to pursue objectives and complete tasks. In this project, LLM serves as the core of the agent design.
+
+\subsubsection{Reasoning Strategy}
+This project follows the ReAct (Reasoning and Acting) process, forming a closed-loop process of reasoning, acting, and observation:
+
+\begin{itemize}
+    \item \textbf{Reasoning phase:} The LLM analyzes user input and develops a tool invocation plan based on the context.
+    \item \textbf{Execution phase:} The system sequentially calls MCP tools, processes the results, and handles potential errors.
+    \item \textbf{Observation phase:} Intermediate states are collected to support subsequent reasoning adjustments and memory updates.
+    \item \textbf{State Management:} Contextual memory is maintained using the MemorySaver module from the LangGraph framework.  
+\end{itemize}
+
+\subsubsection{Single-Agent vs Multi-Agent}
+Currently, Agent architectures can be broadly categorized into single-agent and multi-agent structures.
+
+A Single-Agent System integrates perception, planning, and tool execution into a single loop driven by an LLM. The workflow is straightforward: the agent receives a task, invokes the required tools via MCP, and produces an integrated response based on the outputs.
+
+A Multi-Agent System (MAS) is a system composed of multiple autonomous agents that can communicate, coordinate, and collaborate to complete complex tasks. MAS adopts an “expert team” model, where each agent specializes in specific tasks or domains. There are various MAS organizational structures, such as the Supervisor–Expert architecture, Hierarchical structure, and Blackboard system. 
+
+If a single-agent system with MCP resembles an “all-round expert” capable of using various tools independently, then a multi-agent system is more like a “team of experts”, where each member handles the domain they excel at.
+
+This project also conducted experimental evaluations of agent architecture selection. The system used multi-agent systems based on single-agent architecture and supervisor-expert architecture to build weather assistants, and compared and analyzed their performance. 
+
+
+The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of accuracy.
+
+Based on the above design and experiments, this project determined that the single-agent architecture centered on LLM and MCP should continue to be improved. This architecture enhances the flexibility and robustness of dialogue, laying the foundation for personalized responses and multi-round interactions.
+
+\subsection{Methodology}
+
+
+\subsection{Methodology}
+
+
+\subsection{Methodology}
+
+
+\subsection{Methodology}
+
+
+
+
+
+\section{Results}
+
+\section{Discussion}
+
+\section{Conclusions}
 
 
 
