@@ -2,6 +2,7 @@
 % []. This will change the title page as necessary.
 % \documentclass[project-plan]{report-template}
 \documentclass[final-report]{report-template}
+\usepackage{multirow}
 
 
 % Packages I use in my report.
@@ -12,6 +13,7 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{rotating}
+
 
 % Directory where I saved my figures.
 \graphicspath{{./figures/}}
@@ -115,9 +117,31 @@ This project separates the front-end and back-end. The front-end is responsible 
 
 \subsection{Model Context Protocol (MCP)}
 \subsubsection{The Dilemma of Function Calling}
+As mentioned in the introduction of this paper, Function Calling enables large language models to use external tools by creating an intermediary external function that passes requests from the LLM and executes the corresponding tool call.
 
-\subsubsection{Technical Architecture and Core Advantages of the MCP Protocol}
+However, this technology also has a significant drawback: the code implementation workload is substantial. Even a simple external function can require hundreds of lines of code. To make the LLM understand these functions, developers must manually write a function specification in JSON Schema format for each external tool and design a prompt template description. This development model forces developers to build custom adaptation interfaces for each system, making the development process time-consuming, labor-intensive, and difficult to maintain in the long term. 
 
+\subsubsection{Model Context Protocol: Architecture and Advantages}
+To address the “Tower of Babel dilemma” caused by Function Calling, Anthropic introduced the Model Context Protocol (MCP) in November 2024. MCP is not a specific tool but a standardized protocol for AI agent development. It adopts a distributed architecture, separating the client (LLM-driven) from the server (external tool provider). With this structure, a single client implementation can access any MCP-compliant server, significantly improving development efficiency.
+
+
+The main advantages of MCP include:
+
+\begin{itemize}
+    \item \textbf{Standardization:} MCP defines a unified protocol for tool invocation, including interface definitions, parameter formats, error handling, and documentation specifications. As a result, MCP tools can be directly reused across different projects without additional adaptation.
+
+    \item \textbf{Modular Architecture:} Unlike the tightly coupled design of Function Calling, MCP separates tool providers from tool consumers and supports asynchronous execution, offering better scalability and parallelism.
+
+    \item \textbf{Ecosystem:} MCP offers SDKs for Python, TypeScript, and Java, allowing developers to build clients and servers with just a few lines of code. This lowers the barrier to entry and encourages rapid development.
+\end{itemize}
+
+\subsubsection{Development Difficulty Comparison}
+
+This project initially adopted a Function Calling-based Agent system and was later upgraded to an MCP-based Agent baseline. 
+
+To evaluate the advantages of the MCP architecture in terms of development efficiency, the project compared the code complexity of Function Calling and MCP under the same functionality. When supporting 10 tools, Function Calling requires approximately 150 lines of code, while MCP requires only 50 lines, representing a 67\% reduction in code volume. Additionally, when adding a new tool, Function Calling requires approximately 15 lines of schema configuration, whereas MCP only needs about 4 lines of decorators, significantly reducing the cost of scalability.
+
+Therefore, this project will use the MCP protocol unified management tool to support automatic discovery and registration of modules such as location parsing, weather queries, air quality, and output formatting.
 
 \subsection{Agent Design}
 AI agent is a software system that can perceive its environment, make decisions, and take actions to achieve specific goals. It uses artificial intelligence techniques to act on behalf of users to pursue objectives and complete tasks. In this project, LLM serves as the core of the agent design.
@@ -141,23 +165,144 @@ A Multi-Agent System (MAS) is a system composed of multiple autonomous agents th
 
 If a single-agent system with MCP resembles an “all-round expert” capable of using various tools independently, then a multi-agent system is more like a “team of experts”, where each member handles the domain they excel at.
 
-This project also conducted experimental evaluations of agent architecture selection. The system used multi-agent systems based on single-agent architecture and supervisor-expert architecture to build weather assistants, and compared and analyzed their performance. 
+\subsubsection{Experimental Evaluation of Agent Architectures
+}
+This project conducted experimental evaluations of agent architecture selection. The system used multi-agent systems based on single-agent architecture and supervisor-expert architecture to build weather assistants, and compared and analyzed their performance. The multi-agent system consists of four experts, each responsible for location, weather, air quality, and reporting.
 
+\begin{table}[ht]
+\centering
 
-The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of accuracy.
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Model} & \textbf{Metric} & \textbf{Single Agent} & \textbf{Multi-Agent} \\
+\hline
+\multirow{4}{*}{GPT-4o-mini} 
+& Total Response Time (s)     & 4.62   & 12.14 \\
+& Token Usage           & 5646   & 11875 \\
+& API Calls             & 2.0    & 9.33 \\
+& Execution Success     & 100\%  & 100\% \\
+\hline
+\multirow{4}{*}{DeepSeek-V3} 
+& Total Response Time (s)     & 12.12  & 33.45 \\
+& Token Usage           & 9275   & 21059 \\
+& API Calls             & 2.0    & 9.67 \\
+& Execution Success     & 100\%  & 98\% \\
+\hline
+\end{tabular}
+{\small\caption{Cross-Model Comparison of Single-Agent and Multi-Agent Performance: Averaged Results Over 10 Runs on 5 Weather-Related Queries}}
+\end{table}
+
+The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of success rate.
 
 Based on the above design and experiments, this project determined that the single-agent architecture centered on LLM and MCP should continue to be improved. This architecture enhances the flexibility and robustness of dialogue, laying the foundation for personalized responses and multi-round interactions.
 
-\subsection{Methodology}
+\subsection{Intelligent Module Implementation}
+This system can be divided into multiple modules based on functionality, each designed for different tasks, such as user intent analysis, user profiling, weather data acquisition, and personalized output. These modules are composed of different tools and are uniformly invoked through the MCP protocol to collaborate and run in the agent. The modules follow a clear data flow sequence and optimize performance and response efficiency through caching and asynchronous execution mechanisms.
+
+\subsubsection{User Profiling and Memory System}
+The goal of this system is to create a personalized weather assistant, so implementing a memory mechanism is crucial. For an intelligent chatbot, short-term memory is a basic requirement. The system must remember certain contextual information from the current conversation to support users' subsequent operations based on previous questions. On the other hand, long-term memory is essential for achieving personalization. Different users have significant differences in their needs for weather services, such as preferred weather report styles, temperature units used, frequently queried cities, and even language and emotional expression habits.
+
+In summary, this system is primarily divided into two layers of memory, supporting a hierarchical structure for short-term and long-term memory. Short-term memory records the context and temporary preferences of the current conversation, while long-term memory persistently stores user interests, preferences, and other data in JSON format, supporting cross-conversation memory. The system intelligently merges short-term and long-term memory, persistently saving these user characteristics. This enables the system to continue and adapt to users' historical preferences in subsequent interactions, significantly enhancing the user experience and service consistency.
+
+The system's extraction of user preferences is divided into explicit identification and implicit identification. User preferences are extracted using regular expressions, while implicit identification occurs when a user maintains a habit beyond a certain threshold, at which point the system automatically upgrades it to a preference and saves it as part of the user profile.
+
+\subsubsection{Location Resolution Module}
+The primary task of this module is to convert the location to be queried into coordinates for use with the weather API. The system supports multiple input mode recognition, including city names, postal codes, GPS coordinates, ZIP codes, and country codes, using regular expressions to automatically determine the input type.
+
+This module employs a dual API fallback strategy. It primarily calls the OpenWeather API's Geocoding interface, which supports geocoding, ZIP code parsing, reverse geocoding, and more. If the call fails or the returned information is incomplete, it transparently falls back to the more specialized location query API, OpenCage, and merges the supplementary fields into the final result, enabling the system to provide more comprehensive geographic information data.  
+
+Additionally, the system incorporates a caching mechanism based on hash cache keys, effectively avoiding duplicate parsing requests and improving response speed and API call efficiency.  
+
+\subsubsection{Weather-Related Services}
+
+To ensure high-quality responses to user queries, the system implements a comprehensive set of weather-related service tools, covering weather data retrieval, air quality monitoring, alert notification, and weather map visualization. All data is sourced from the OpenWeather API, ensuring accuracy and reliability.
+
+These modules together form a high-throughput pipeline: \\
+Location Parsing → Concurrent Weather Data Retrieval → Profile Fusion → Stylized Output Generation.
+
+\paragraph{Weather Data Module}~
+
+This module is built on OpenWeather APIs (versions 2.5 and 3.0) and serves as the foundation for acquiring essential meteorological information. It supports current weather, minutely forecasts, hourly forecasts, 16-day daily forecasts, and historical weather data. Users can query by city name, geographic coordinates, or postal code. \\
+The module also offers basic climate statistics, such as average temperature, humidity, wind speed, and precipitation frequency over a specified period, which helps users analyze weather trends. \\
+
+A hierarchical caching mechanism is designed for this module, assigning differentiated cache durations to various data types to balance freshness and reduce API load. To enhance stability, it incorporates an exponential backoff retry mechanism and supports Gzip-compressed data transmission.
+
+\paragraph{Air Quality Module}~
+
+Inheriting the structure of the weather module, this component uses the OpenWeather Air Pollution API to retrieve pollutants such as PM2.5, PM10, O$_3$, NO$_2$, SO$_2$, and CO. It also calculates the unified Air Quality Index (AQI) to assess the level of air pollution and its potential health risks.
+
+\paragraph{Weather Alert Module}~
+
+This module integrates both OpenWeather’s official disaster alert API and user-defined alert conditions, forming a multi-layered risk notification system. Official alerts are automatically categorized and prioritized, with multilingual output supported. \\
+In parallel, users can define custom thresholds for critical indicators (e.g., temperature, wind speed, AQI). Once these thresholds are exceeded, the system triggers personalized alerts and provides tailored recommendations based on the user profile (e.g., for children, the elderly, or drivers).
+
+\paragraph{Weather Map Module}~
+
+This module utilizes the OpenWeather Maps API to render a variety of meteorological layers (temperature, wind speed, cloud cover, precipitation, etc.) as well as specialized layers (e.g., PAC0, TA2, HRD0). It supports customization of layer transparency, terrain overlays, and solar illumination. \\
+The system automatically stitches tile images across geographic areas to generate weather visualizations for specified regions, offering users an intuitive graphical overview of atmospheric conditions.
+
+\subsubsection{Personalized Weather Reporting Module}
+
+To deliver personalized weather reports, the system supports stylized language wrapping of raw meteorological data. A keyword-based style recognition mechanism enables over 20 output styles, including brief, detailed, social media, poetic, and professional tones (e.g., pilot, scientist), among others.
+
+There are two modes of output generation:
+
+\begin{itemize}
+  \item \textbf{Template-Based Output:} \\
+  Common styles are handled using predefined system prompts. These allow for direct and fast rendering of weather information.
+
+  \item \textbf{LLM-Driven Output:} \\
+  For complex styles that require greater expressiveness, the system injects structured weather data and user profile information into a customized prompt, guiding the LLM to generate content in the target style. \\
+\end{itemize}
+
+All formatted outputs are cached using an MD5-based hashing mechanism to avoid redundant LLM calls and reduce resource consumption.
+
+\subsection{Retrieval-Augmented Generation (RAG) for Knowledge Enrichment}
+
+To strengthen the system’s domain accuracy and contextual reasoning, we incorporated a Retrieval-Augmented Generation module. By building a structured weather knowledge base, refining the embedding and search pipeline, and injecting retrieved facts on-the-fly during dialogue, the model delivers more complete and reliable answers to complex weather queries.
+
+\subsubsection{Knowledge-base Construction}
+
+\textbf{Data collection:} Twelve thematic corpora were assembled from Wikipedia and curated documents, covering meteorology fundamentals, health impacts, hazard mitigation, historical weather records, and global city profiles (climate, culture, transport, cuisine, etc.). Raw material is stored as JSON ($\approx$ 4.3 MB, 73,373 rows).
+
+\vspace{0.3em}
+\textbf{Vector store:} Each document is split with a recursive character splitter to minimise semantic fragmentation, then embedded with Sentence-Transformers \texttt{all-MiniLM-L6-v2} (384-D, FP16). Embeddings and metadata (title, source, topic) are written to a local ChromaDB instance, enabling topic-aware re-ranking. Keyword filters and relevance scoring eliminate off-topic or low-quality passages before ingestion.
+
+\subsubsection{Embedding Strategy and Chunk-size Optimisation}
+
+Chunk size was tuned experimentally. With 300 tokens per chunk, the system achieves the best balance of accuracy ($\approx$ 85\%), knowledge coverage ($>$ 93\%) and latency ($\approx$ 1.2 s). Smaller chunks ($\leq$ 200 tokens) lower latency but harm recall, while larger chunks ($\geq$ 500 tokens) slow retrieval without significant accuracy gains. Accordingly, the default setting is 300 tokens with zero overlap, embedded via the MiniLM model described above.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/all_similarity_comparison.png}
+    \caption{Comparison of Mean Similarity Across Different Chunking Strategies}
+    \label{fig:all_similarity_comparison}
+\end{figure}
+
+\subsubsection{Retrieval and Intelligent Routing}
+
+Search employs a hybrid scheme. A cosine top-k query ($k \leq 5$) brings back candidate chunks from ChromaDB; keyword overlap and other features are then linearly combined into a final score. An intent classifier routes each user question to the most relevant sub-collection (general weather, city facts, hazard advice, and so on), further improving match quality.
+
+\subsubsection{Knowledge Fusion and Contextual Enhancement}
+
+The RAG layer works in parallel with the user-profile component. Before formulating a reply, the system builds a prompt that blends:
+\begin{itemize}
+    \item conversational context,
+    \item user preferences --- style, language, focus city,
+    \item and retrieved knowledge snippets.
+\end{itemize}
+The same mechanism auto-fills missing information in elliptical queries, for example by inserting the current city or metric, so responses remain coherent and personalised.
+
+\subsubsection{Module Benefits and Evaluation}
+
+Benchmarking shows that, on multilingual, cross-domain questions rich in technical terms, the RAG-enabled assistant consistently outperforms a plain LLM baseline. Gains are observed in factual accuracy, semantic depth, and completeness of explanation.
 
 
-\subsection{Methodology}
+\subsection{Performance Optimization and Engineering Trade-offs}
 
 
-\subsection{Methodology}
 
 
-\subsection{Methodology}
 
 
 
