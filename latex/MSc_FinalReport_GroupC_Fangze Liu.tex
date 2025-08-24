@@ -2,6 +2,8 @@
 % []. This will change the title page as necessary.
 % \documentclass[project-plan]{report-template}
 \documentclass[final-report]{report-template}
+\usepackage{multirow}
+
 
 % Packages I use in my report.
 \usepackage{graphicx}
@@ -11,6 +13,15 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{pgfplotstable}
+\usepackage{subcaption}
+\usepackage{makecell}
+
+
 
 % Directory where I saved my figures.
 \graphicspath{{./figures/}}
@@ -19,7 +30,7 @@
 \university{Imperial College London}
 \department{Department of Earth Science and Engineering}
 \course{MSc in Applied Computational Science and Engineering}
-\title{OpenWeather ChatAgent: Design and Implementation of an AI Weather Assistant System}
+\title{OpenWeather ChatAgent: Design and Implementation of an LLM-Based Weather Assistant System}
 \author{Fangze Liu}
 \email{fangze.liu24@imperial.ac.uk}
 \githubusername{esemsc-fl724}
@@ -31,124 +42,496 @@
 
 \maketitlepage  % generate title page
 
+% Table of Contents page
+\tableofcontents
+\newpage   % Break page, separate page after table of contents
+
 \section*{AI Acknowledgement Statement}
-I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of large language models (LLMS), as well as to debug and test the code of my projects. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
+I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) and Anthropic’s Claude 4 (https://claude.ai/) to support my learning and understanding of large language models (LLMs), as well as to assist in the development, debugging, and testing of my project code. These generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
 
 % Abstract
 \section*{Abstract}
-
+This project aims to design and implement an AI weather agent system powered by Large Language Models (LLMs). By integrating with the OpenWeather API, the system supports natural language queries for real-time weather. With the help of OpenAI's Function Calling, the model can dynamically interpret the user's intention and structurally call external tool functions to obtain weather data. To enhance modularity and cross-model compatibility, the project will explore the use of the Model Context Protocol (MCP). Optional extensions may include multi-model support and lightweight memory modules. The agent will be optimized in terms of intelligence, stability, and responsiveness. The final deliverables of the project include a user interface, end-to-end system integration, and full documentation. This project aims to demonstrate how LLMs can evolve from passive language generators into AI agents, providing a practical showcase of LLM-powered services in real-world applications.
 
 % Introduction section
+\newpage
 \section{Introduction}
-\subsection{Background and Problem Description}
-Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. It is crucial to obtain timely and accurate weather information. However, traditional weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. As a result, building an AI Weather Assistant System powered by Large Language Models (LLMs) can significantly improve the user experiences.
+\subsection{Problem Description and Significance}
+Weather, as the most critical environmental information after time and place, has a direct and far-reaching impact on people's daily lives. However, traditional APIs or weather query systems mostly use template-based responses or keyword matching, which are unable to understand the diversified expressions of user's natural language, and are difficult to adapt to the increasingly complex query needs of users. 
 
 In recent years, with the rapid development of LLMs in natural language processing, more and more users have started to use conversational LLMs like ChatGPT (OpenAI, 2023)~\cite{OpenAI2023} for various queries. However, many user questions require knowledge beyond what a pre-trained LLM can store internally.~\cite{Zhang2023} For example, a user might ask, "What’s the weather like in London right now?" Clearly, such tasks require accessing real-time data through external APIs.~\cite{Chadha2024} The ability to interact with tools is a key step in the evolution of LLMs from passive text generators to action-capable AI agents.
 
-Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention, how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data. Additional concerns such as error handling, multi-model compatibility, and asynchronous task execution further increase system complexity.
+Nevertheless, applying LLMs to real-world weather queries presents several challenges, such as: how to understand the user's intention, how to call the APIs in a structured way to obtain the external data; and how to semantically process the returned data.
 
+Building an AI Weather Assistant System based on Large Language Models (LLMs) not only can enhance the user experience, but also create a practical example for engineering applications for LLMs. These design patterns can be applied to other agent-based cases such as tourism, health and education etc.
 
-\subsection{Significance}
-but also serve as a practical paradigm for engineering applications of LLMs that can be extended to other domains.
-
-Weather services are fundamental for human safety, productivity, and planning, especially in urban and climate-sensitive areas. However, existing weather systems struggle to meet the rising expectations for personalized, real-time, and context-aware weather information. Traditional APIs or mobile apps often lack natural conversation capabilities and adaptability to user-specific needs.
-
-This project demonstrates a practical engineering application of LLMs — not as passive question-answering bots, but as intelligent, action-capable agents capable of real-time data retrieval, semantic reasoning, and adaptive response generation. By integrating the OpenWeather API with LLM-powered tools and coordinating them via the Model Context Protocol (MCP), the project delivers a flexible, modular, and intelligent solution for real-world weather interactions.
-
-More importantly, this system showcases how state-of-the-art AI technologies — including Function Calling, ReAct-style tool orchestration, user memory, multilingual output, and vector-based retrieval (RAG) — can be combined in a production-grade weather assistant. These design patterns can be extended to many other agent-based use cases such as finance, health, and education, thus presenting broader implications beyond weather applications.
 
 \subsection{Review of Existing Work}
+In my research, I have discovered several different methods for designing weather assistant systems.
 
+First, there are traditional weather information systems, which usually rely on APIs and mobile applications to provide weather data~\cite{Zhang2023}. Users must manually interpret numerical weather data, which is not user-friendly, especially in varied real-life situations.
 
-\subsection{Objectives and Expected Deliverables}
-Therefore, this project aims to build an LLM-based AI weather agent system that can understand natural language queries, retrieve real-time weather data via the OpenWeather API~\cite{OpenWeatherAPI}, and generate informative and coherent replies to provide users with real and accurate weather data and related information.
+Second, some weather chatbots are built using the Rasa framework~\cite{WeatherBot2018}, which use a combination of traditional NLP, predefined rules, and API calls to deliver responses. However, the disadvantage is that it relies on predefined intents and rules, making it difficult to handle complex real-world questions.
+
+In the past two years, AI agents have become more popular. Developers can use system prompts to tell LLMs what tools are available in the system. Some weather systems~\cite{Jeong2024} have explored the integration of LLMs with weather APIs. 
+
+However, there are still some limitations. For example, the tool lists are directly embedded in the LLM prompt, making it hard to scale and maintain. Also, due to the lack of a clear standard, LLM may return incorrect formats, causing retries and extra token usage. Some well-known agents, such as Cline~\cite{Cline2025}, are using the system prompt method.
+
+After recognizing the problems with system prompts, major model providers started to introduce a more structured way of calling tools, known as Function Calling~\cite{Liu2024}~\cite{Gim2024}. Platforms like OpenAI~\cite{OpenAI2025}, Claude~\cite{Claude2025}, and Gemini~\cite{Gemini2025} have all developed their own Function Calling systems. The core idea is to register each tool using a unified JSON Schema format, and provide that to the model separately from the prompt. I have also seen some articles~\cite{Anthonio2024}~\cite{KermaniWeatherAgent2025} on implementing weather chatbot that have already started using Function Calling.
+
+Function Calling has its benefits: developers do not need to write complex prompts, the system can detect format errors and recover, and it also saves tokens by not repeating tool descriptions. However, the main drawback is the lack of a unified standard. Different providers define Function Calling differently, and some models do not natively support this feature, making tool definitions difficult to reuse.
+
+As a result, both System Prompt–based and Function Calling–based methods for defining tools currently coexist in the market.
+
+To address these issues, providers begin to explore some methods for managing tools, such as the Model Context Protocol~\cite{Anthropic2024MCP}, which will be discussed in detail in later sections.
+
+\subsection{Objectives}
+This project aims to develop a practical intelligent weather assistant system based on large language models (LLMs), supporting natural language interaction, real-time weather data queries, and personalized weather reports.
+
+The system is designed to integrate multiple modules, including intelligent location, weather query, stylized output and memory modules, etc. The system supports multilingual conversations, multiple output styles, and user preference recognition. It also supports short-term and long-term memory. To enhance multi-model compatibility and maintainability, this project adopts the Model Context Protocol (MCP) for unified tool registration and combines Retrieval-Augmented Generation (RAG)~\cite{Jeong2024}~\cite{GaoYunfan2023} for knowledge enhancement.
+
+The following deliverables are expected from the project:
+
+\begin{itemize}
+  \item A working intelligent weather chatbot system, supporting both command-line and web-based interaction, integrated with LLMs and the OpenWeather API~\cite{OpenWeatherAPI}.
+  \item A modular toolset based on the MCP protocol, supporting services such as weather, location and map visualization.
+  % \item A series of personalized features for system expansion.
+  \item Evaluate the feasibility of the method and quantify the improvement in performance.
+  % \item A complete project report, source code, demonstration video, and deployment documentation for reproducibility and delivery.
+\end{itemize}
 
 
 
 % Another section
-\section{Methodology}
-\subsection{OpenWeather API}
-
-This project uses the OpenWeather One Call API to obtain current weather conditions, hourly/daily forecasts, historical data, and weather alerts. By calling the endpoint at \url{https://api.openweathermap.org/data/3.0/onecall}~\cite{OpenWeatherAPI} and providing the geographic coordinates of a city, the system retrieves structured meteorological data to supply the agent with real-time external information support.
-
-
-\subsection{Function Calling and Tool Invocation}
-Due to inherent technical limitations, large language models (LLMs) cannot directly communicate with external tools. To solve this problem, OpenAI introduced Function Calling in March 2023. This technique enables LLMs to call external tools by creating an intermediary function that bridges the model’s request and the external API, so that the model has the ability to call external tools. Function Calling~\cite{Liu2024}~\cite{Gim2024} is an important foundation to promote the evolution of the LLMs from a dialogue tool to an AI Agent,  which are capable of autonomously perceiving the environment, making decisions, and taking actions.
-
-In this project, Function Calling enables the model to automatically generate structured parameters and call the OpenWeather API based on user requests, so that the system not only understands and generates natural language, but also calls specific APIs or tools to complete more complex tasks based on user needs. (Figure 1)
-
-Function Calling not only improves the accuracy and personalization of the model's response, but also supports a “perception–action–feedback” loop, which enables dynamic execution of complex tasks. To simplify this process, we plan to explore coordination libraries (e.g., LangChain~\cite{LangChainIntro}), which provides modular support for tool-based LLM agents.~\cite{Anthonio2024}
-
-
-% Figure
-\begin{figure}[H]
-    \begin{center}
-        \includegraphics[width=0.6\textwidth]{latex/figures/function calling.png}
-    \end{center}
-    \caption{\label{fig:function calling} Flowchart of Function Calling Execution}
-\end{figure}
-
-\subsection{MCP Protocol Integration}
-Although traditional Function Calling enables large language models (LLMs) to invoke external tools, the lack of standardized specifications across different vendors often leads to high costs in function definition, API adaptation, and long-term maintenance, making the development process complex.
-
-To address this challenge, Anthropic released the Model Context Protocol (MCP) in November 2024~\cite{Anthropic2024MCP}, introducing a standardized and distributed architecture consisting of a Client and a Server (Figure 2). With a unified specification, the development efficiency can be greatly improved.~\cite{Hou2025}~\cite{Luo2025}
-
-Overall, MCP offers standardized interfaces, supports distributed and asynchronous execution, and provides a robust developer ecosystem, which fits the real-world business needs. In this project, we plan to explore the MCP protocol to improve interface compatibility and response performance, and lay the foundation for multi-model collaboration and complex task scheduling.
-
-% Figure
-\begin{figure}[H]
-  \centering
-  \fcolorbox{white}{white}{
-    \includegraphics[width=0.9\textwidth]{figures/MCP.png}
-  }
-  \caption{Structure of the MCP Protocol}
-  \label{fig:mcp}
-\end{figure}
-
-\subsection{Considerations and Limitations}
-Although extensive literature and project reviews have been conducted, the methodology section currently only outlines a preliminary system architecture, as many practical challenges may arise during development. For example, although Function Calling has the disadvantage of inconsistent format and long code, it integrates well with AI agents and can simplify system testing. The MCP protocol seems to have all the advantages, but in fact it sends a large amount of context to the LLM, and if the performance of the LLM is not good enough, there may be side effects. Additional features such as context retrieval or user profiling may also need the introduction of Retrieval-Augmented Generation (RAG)~\cite{GaoYunfan2023}. Therefore, some methods have been marked as 'exploratory' to indicate that they are options that can be investigated further.
-
 \newpage
-\section{Deliverable}
-Expected deliverables of this project:
-	
-\begin{enumerate}
-  \item \textbf{System Prototype}
-  \begin{itemize}
-    \item Build an AI Weather Agent system based on OpenAI model and OpenWeather API~\cite{Cao2024}, which supports users to query real-time weather and weather report in natural language.
+\section{Methodology}
+\subsection{System Architecture and Technology Stack}
 
-  \end{itemize}
-
-  \item \textbf{Baseline Module Based on Function Calling}
-  \begin{itemize}
-    \item Use OpenAI’s Function Calling mechanism to construct tool functions, achieving structured integration between the LLM and the OpenWeather API.
-
-  \end{itemize}
-
-  \item \textbf{MCP protocol (Exploratory)}
-  \begin{itemize}
-    \item Implement a basic MCP client–server architecture to decouple the LLM from tool modules, supporting asynchronous task execution.
-
-  \end{itemize}
+The system for this project adopts a microservice architecture and uses the Model Context Protocol (MCP) to manage various tools and services. The core framework is built on a combination of LLM, MCP, and RAG, which shows the popular trends in AI Agent. The system is divided into three layers, each with clear responsibilities and interface definitions, in accordance with back-end development standards.
 
 
-  \item \textbf{Functional prototype}
-  \begin{itemize}
-    \item Develop a user-friendly frontend interface that supports natural language weather queries.
-  \end{itemize}
+\textbf{Agent layer:}
+This layer uses models such as OpenAI GPT~\cite{OpenAI2025} or DeepSeek~\cite{DeepSeek2025} as the main reasoning engine. The main reason for this choice is that it supports Function Calling, which simplifies tool invocation. This layer is responsible for understanding the intentions of the users, planning the execution steps, and coordinating calls to external tools. The entire reasoning process is implemented using LangGraph~\cite{LangGraph2025}, following the ReAct-style process, which has good traceability and execution control capabilities. Using the locally deployed ChromaDB vector database~\cite{Chroma2025} to build weather knowledge RAG, thereby improving the accuracy of system responses.
 
-  \item \textbf{Documentation \& Deployment Package}
-  \begin{itemize}
-    \item Provide comprehensive documentation, including system architecture diagrams, module specifications, a deployment guide, and API integration instructions.
-  \end{itemize}
+\textbf{MCP server layer:}
+It is the core integration layer of the system. Weather-related tools are mainly managed through the MCP protocol. This layer supports dynamic discovery, registration, and execution of tools, providing a standardized tool interface for LLM agents.
 
-  \item \textbf{Optional Extensions (Exploratory)}
-  \begin{itemize}
-    \item Investigate integration with other LLMs (e.g., Gemini, DeepSeek) to evaluate multi-model compatibility.
-    \item Explore context memory modules for maintaining user preferences and chat history.~\cite{LDAgent}
-    \item Optionally extend support to historical weather data queries or knowledge-augmented generation (e.g., RAG)~\cite{GaoYunfan2023}~\cite{Jeong2024}. Further literature review is required to assess feasibility.
-  \end{itemize}
-\end{enumerate}
+
+\textbf{User interface layer:}
+This project separates the front-end and back-end. The front-end is responsible for calling the back-end interface. The front-end uses Streamlit~\cite{Streamlit2025} to implement a modern web interface that supports streaming output. The interface is visually appealing and does not require users to operate on the command-line, improving the user experience.
+
+\subsection{Model Context Protocol (MCP)}
+\subsubsection{The Dilemma of Function Calling}
+As mentioned in the introduction of this paper, Function Calling enables large language models to use external tools by creating an intermediary external function that passes requests from the LLM and executes the corresponding tool call.
+
+However, this technology also has a significant drawback: the code implementation workload is substantial. Even a simple external function can require hundreds of lines of code. To make the LLM understand these functions, developers must manually write a function specification in JSON Schema format for each external tool and design a prompt template description. This development model forces developers to build custom adaptation interfaces for each system, making the development process time-consuming, labor-intensive, and difficult to maintain in the long term. 
+
+\subsubsection{Model Context Protocol: Architecture and Advantages}
+To address the “Tower of Babel dilemma” caused by Function Calling, Anthropic introduced the Model Context Protocol (MCP) in November 2024. MCP is not a specific tool but a standardized protocol for AI agent development. It adopts a distributed architecture, separating the client (LLM-driven) from the server (external tool provider). With this structure, a single client implementation can access any MCP-compliant server, significantly improving development efficiency.
+
+
+The main advantages of MCP include:
+
+\begin{itemize}
+    \item \textbf{Standardization:} MCP defines a unified protocol for tool invocation, including interface definitions, parameter formats, error handling, and documentation specifications. As a result, MCP tools can be directly reused across different projects without additional adaptation.
+
+    \item \textbf{Modular Architecture:} Unlike the tightly coupled design of Function Calling, MCP separates tool providers from tool consumers and supports asynchronous execution, offering better scalability and parallelism.
+
+    \item \textbf{Ecosystem:} MCP offers SDKs for Python, TypeScript, and Java, allowing developers to build clients and servers with just a few lines of code. This lowers the barrier to entry and encourages rapid development.
+\end{itemize}
+
+\subsubsection{Development Difficulty Comparison}
+
+This project initially adopted a Function Calling-based Agent system and was later upgraded to an MCP-based Agent baseline. 
+
+To evaluate the advantages of the MCP architecture in terms of development efficiency, the project compared the code complexity of Function Calling and MCP under the same functionality. When supporting 10 tools, Function Calling requires approximately 150 lines of code, while MCP requires only 50 lines, representing a 67\% reduction in code volume. Additionally, when adding a new tool, Function Calling requires approximately 15 lines of schema configuration, whereas MCP only needs about 4 lines of decorators, significantly reducing the cost of scalability.
+
+Therefore, this project will use the MCP protocol unified management tool to support automatic discovery and registration of modules such as location parsing, weather queries, air quality, and output formatting.
+
+\subsection{Agent Design}
+AI agent is a software system that can perceive its environment, make decisions, and take actions to achieve specific goals. It uses artificial intelligence techniques to act on behalf of users to pursue objectives and complete tasks. In this project, LLM serves as the core of the agent design.
+
+\subsubsection{Reasoning Strategy}
+This project follows the ReAct (Reasoning and Acting) process, forming a closed-loop process of reasoning, acting, and observation:
+
+\begin{itemize}
+    \item \textbf{Reasoning phase:} The LLM analyzes user input and develops a tool invocation plan based on the context.
+    \item \textbf{Execution phase:} The system sequentially calls MCP tools, processes the results, and handles potential errors.
+    \item \textbf{Observation phase:} Intermediate states are collected to support subsequent reasoning adjustments and memory updates.
+    \item \textbf{State Management:} Contextual memory is maintained using the MemorySaver module from the LangGraph framework.  
+\end{itemize}
+
+\subsubsection{Single-Agent vs Multi-Agent}
+Currently, Agent architectures can be broadly categorized into single-agent and multi-agent structures.
+
+A Single-Agent System integrates perception, planning, and tool execution into a single loop driven by an LLM. The workflow is straightforward: the agent receives a task, invokes the required tools via MCP, and produces an integrated response based on the outputs.
+
+A Multi-Agent System (MAS) is a system composed of multiple autonomous agents that can communicate, coordinate, and collaborate to complete complex tasks. MAS adopts an “expert team” model, where each agent specializes in specific tasks or domains. There are various MAS organizational structures, such as the Supervisor–Expert architecture, Hierarchical structure, and Blackboard system. 
+
+If a single-agent system with MCP resembles an “all-round expert” capable of using various tools independently, then a multi-agent system is more like a “team of experts”, where each member handles the domain they excel at.
+
+\subsubsection{Experimental Evaluation of Agent Architectures
+}
+This project conducted experimental evaluations of agent architecture selection. The system used multi-agent systems based on single-agent architecture and supervisor-expert architecture to build weather assistants, and compared and analyzed their performance. The multi-agent system consists of four experts, each responsible for location, weather, air quality, and reporting.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{l l *{2}{>{\centering\arraybackslash}X}}
+\toprule
+\textbf{Model} & \textbf{Metric} & \textbf{Single Agent} & \textbf{Multi-Agent} \\
+\midrule
+\multirow{4}{*}{GPT-4o-mini}
+& Total Response Time (s) & 4.62  & 12.14 \\
+& Token Usage             & 5646  & 11875 \\
+& API Calls               & 2.0   & 9.33 \\
+& Execution Success       & 100\% & 100\% \\
+\midrule
+\multirow{4}{*}{DeepSeek-V3.1}
+& Total Response Time (s) & 12.12 & 33.45 \\
+& Token Usage             & 9275  & 21059 \\
+& API Calls               & 2.0   & 9.67 \\
+& Execution Success       & 100\% & 98\% \\
+\bottomrule
+\end{tabularx}
+\caption{Cross-Model Comparison of Single-Agent vs Multi-Agent (averaged over 10 runs on 5 queries)}
+\end{table}
+
+The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of success rate.
+
+Based on the above design and experiments, this project determined that the single-agent architecture centered on LLM and MCP should continue to be improved. This architecture enhances the flexibility and robustness of dialogue, laying the foundation for personalized responses and multi-round interactions.
+
+\subsection{Intelligent Module Implementation}
+This system can be divided into multiple modules based on functionality, each designed for different tasks, such as user intent analysis, user profiling, weather data acquisition, and personalized output. These modules are composed of different tools and are uniformly invoked through the MCP protocol to collaborate and run in the agent. The modules follow a clear data flow sequence and optimize performance and response efficiency through caching and asynchronous execution mechanisms.
+
+\subsubsection{User Profiling and Memory System}
+The goal of this system is to create a personalized weather assistant, so implementing a memory mechanism is crucial. For an intelligent chatbot, short-term memory is a basic requirement. The system must remember certain contextual information from the current conversation to support users' subsequent operations based on previous questions. On the other hand, long-term memory is essential for achieving personalization. Different users have significant differences in their needs for weather services, such as preferred weather report styles, temperature units used, frequently queried cities, and even language and emotional expression habits.
+
+In summary, this system is primarily divided into two layers of memory, supporting a hierarchical structure for short-term and long-term memory. Short-term memory records the context and temporary preferences of the current conversation, while long-term memory persistently stores user interests, preferences, and other data in JSON format, supporting cross-conversation memory. The system intelligently merges short-term and long-term memory, persistently saving these user characteristics. This enables the system to continue and adapt to users' historical preferences in subsequent interactions, significantly enhancing the user experience and service consistency.
+
+The system's extraction of user preferences is divided into explicit identification and implicit identification. User preferences are extracted using regular expressions, while implicit identification occurs when a user maintains a habit beyond a certain threshold, at which point the system automatically upgrades it to a preference and saves it as part of the user profile.
+
+\subsubsection{Location Resolution Module}
+The primary task of this module is to convert the location to be queried into coordinates for use with the weather API. The system supports multiple input mode recognition, including city names, postal codes, GPS coordinates, ZIP codes, and country codes, using regular expressions to automatically determine the input type.
+
+This module employs a dual API fallback strategy. It primarily calls the OpenWeather API's Geocoding interface, which supports geocoding, ZIP code parsing, reverse geocoding, and more. If the call fails or the returned information is incomplete, it transparently falls back to the more specialized location query API, OpenCage, and merges the supplementary fields into the final result, enabling the system to provide more comprehensive geographic information data.  
+
+Additionally, the system incorporates a caching mechanism based on hash cache keys, effectively avoiding duplicate parsing requests and improving response speed and API call efficiency.  
+
+\subsubsection{Weather-Related Services}
+
+To ensure high-quality responses to user queries, the system implements a comprehensive set of weather-related service tools, covering weather data retrieval, air quality monitoring, alert notification, and weather map visualization. All data is sourced from the OpenWeather API, ensuring accuracy and reliability.
+
+These modules together form a high-throughput pipeline: \\
+Location Parsing → Concurrent Weather Data Retrieval → Profile Fusion → Stylized Output Generation.
+
+\paragraph{Weather Data Module}~
+
+This module is built on OpenWeather APIs (versions 2.5 and 3.0) and serves as the foundation for acquiring essential meteorological information. It supports current weather, minutely forecasts, hourly forecasts, 16-day daily forecasts, and historical weather data. Users can query by city name, geographic coordinates, or postal code. \\
+The module also offers basic climate statistics, such as average temperature, humidity, wind speed, and precipitation frequency over a specified period, which helps users analyze weather trends. \\
+
+A hierarchical caching mechanism is designed for this module, assigning differentiated cache durations to various data types to balance freshness and reduce API load. To enhance stability, it incorporates an exponential backoff retry mechanism and supports Gzip-compressed data transmission.
+
+\paragraph{Air Quality Module}~
+
+Inheriting the structure of the weather module, this component uses the OpenWeather Air Pollution API to retrieve pollutants such as PM2.5, PM10, O$_3$, NO$_2$, SO$_2$, and CO. It also calculates the unified Air Quality Index (AQI) to assess the level of air pollution and its potential health risks.
+
+\paragraph{Weather Alert Module}~
+
+This module integrates both OpenWeather’s official disaster alert API and user-defined alert conditions, forming a multi-layered risk notification system. Official alerts are automatically categorized and prioritized, with multilingual output supported. \\
+In parallel, users can define custom thresholds for critical indicators (e.g., temperature, wind speed, AQI). Once these thresholds are exceeded, the system triggers personalized alerts and provides tailored recommendations based on the user profile (e.g., for children, the elderly, or drivers).
+
+\paragraph{Weather Map Module}~
+
+This module utilizes the OpenWeather Maps API to render a variety of meteorological layers (temperature, wind speed, cloud cover, precipitation, etc.) as well as specialized layers (e.g., PAC0, TA2, HRD0). It supports customization of layer transparency, terrain overlays, and solar illumination. \\
+The system automatically stitches tile images across geographic areas to generate weather visualizations for specified regions, offering users an intuitive graphical overview of atmospheric conditions.
+
+\subsubsection{Personalized Weather Reporting Module}
+
+To deliver personalized weather reports, the system supports stylized language wrapping of raw meteorological data. A keyword-based style recognition mechanism enables over 20 output styles, including brief, detailed, social media, poetic, and professional tones (e.g., pilot, scientist), among others.
+
+There are two modes of output generation:
+
+\begin{itemize}
+  \item \textbf{Template-Based Output:} \\
+  Common styles are handled using predefined system prompts. These allow for direct and fast rendering of weather information.
+
+  \item \textbf{LLM-Driven Output:} \\
+  For complex styles that require greater expressiveness, the system injects structured weather data and user profile information into a customized prompt, guiding the LLM to generate content in the target style. \\
+\end{itemize}
+
+All formatted outputs are cached using an MD5-based hashing mechanism to avoid redundant LLM calls and reduce resource consumption.
+
+\subsection{Retrieval-Augmented Generation (RAG) for Knowledge Enrichment}
+
+To strengthen the system’s domain accuracy and contextual reasoning, we incorporated a Retrieval-Augmented Generation module. By building a structured weather knowledge base, refining the embedding and search pipeline, and injecting retrieved facts on-the-fly during dialogue, the model delivers more complete and reliable answers to complex weather queries.
+
+\subsubsection{Knowledge-base Construction}
+
+\textbf{Data collection:} Twelve thematic corpora were assembled from Wikipedia and curated documents, covering meteorology fundamentals, health impacts, hazard mitigation, historical weather records, and global city profiles (climate, culture, transport, cuisine, etc.). Raw material is stored as JSON ($\approx$ 4.3 MB, 73,373 rows).
+
+\vspace{0.3em}
+\textbf{Vector store:} Each document is split with a recursive character splitter to minimise semantic fragmentation, then embedded with Sentence-Transformers \texttt{all-MiniLM-L6-v2} (384-D, FP16). Embeddings and metadata (title, source, topic) are written to a local ChromaDB instance, enabling topic-aware re-ranking. Keyword filters and relevance scoring eliminate off-topic or low-quality passages before ingestion.
+
+\subsubsection{Embedding Strategy and Chunk-size Optimisation}
+
+Efficient document chunking plays a critical role in optimizing retrieval performance. The choice of chunking strategy not only affects the relevance of retrieved content but also impacts the overall accuracy of the system.
+
+\textbf{Experimental Setup:}  
+After constructing and embedding the knowledge base, we conducted a systematic evaluation of two key parameters: chunk size and overlap. The goal was to identify the configuration that maintains semantic coherence while maximizing retrieval effectiveness. Using the collected weather-related corpus as input, we tested ten configurations: no chunking, and chunk sizes of 200, 400, 800, and 1300 tokens — each further evaluated with overlaps of 0, 50, and 100 tokens. All configurations were encoded into vectors using the \texttt{all-MiniLM-L6-v2} model (384 dimensions).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/all_similarity_comparison.png}
+    \caption{Comparison of Mean Similarity Across Different Chunking Strategies}
+    \label{fig:all_similarity_comparison}
+\end{figure}
+
+\textbf{Results and Analysis:}  
+The configuration with a chunk size of 200 tokens and no overlap (\texttt{chunk\_200\_0}) yielded the highest mean similarity score of 0.5480 — an improvement of approximately 2.8\% over the baseline with no chunking.  
+Adding a 50-token overlap to the same chunk size (\texttt{chunk\_200\_50}) did not lead to a significant gain (mean similarity of 0.5452), but increased the number of vectors stored.  
+When chunk sizes exceeded 400 tokens, a consistent decline in mean similarity was observed (ranging from 0.5365 to 0.5293). This drop is attributed to semantic interference across segment boundaries. Notably, overlapping tokens had a more positive impact under larger chunk sizes, helping to partially mitigate the semantic loss.
+
+\textbf{Conclusion:}  
+Balancing accuracy and computational efficiency, the final system adopts a chunk size of 200 tokens with zero overlap for vectorization. This configuration preserves semantic completeness while achieving favorable trade-offs in retrieval latency and storage cost.
+
+
+
+\subsubsection{Retrieval and Intelligent Routing}
+
+Search employs a hybrid scheme. A cosine top-k query ($k \leq 5$) brings back candidate chunks from ChromaDB; keyword overlap and other features are then linearly combined into a final score. An intent classifier routes each user question to the most relevant sub-collection (general weather, city facts, hazard advice, and so on), further improving match quality.
+
+\subsubsection{Knowledge Fusion and Contextual Enhancement}
+
+The RAG layer works in parallel with the user-profile component. Before formulating a reply, the system builds a prompt that blends:
+\begin{itemize}
+    \item conversational context,
+    \item user preferences --- style, language, focus city,
+    \item and retrieved knowledge snippets.
+\end{itemize}
+The same mechanism auto-fills missing information in elliptical queries, for example by inserting the current city or metric, so responses remain coherent and personalised.
+
+Benchmarking shows that, on multilingual, cross-domain questions rich in technical terms, the RAG-enabled assistant consistently outperforms a plain LLM baseline. Gains are observed in factual accuracy, semantic depth, and completeness of explanation.
+
+
+\subsection{Performance Optimization and Engineering Trade-offs}
+
+Currently, this project has added many additional features on top of the baseline, gradually transforming the system into a personalized weather assistant agent. Of course, this comes at a cost, the most obvious being a slowdown in single-round query speed. To meet engineering requirements for sub-second response times and multi-concurrent access, the system requires some optimization. This section implements multi-level optimizations across multiple dimensions and conducts a quantitative analysis of potential trade-offs between performance and accuracy, as well as complexity and maintainability.
+
+
+\subsubsection{Caching and Memory Optimization}
+
+\textbf{Hierarchical Caching Strategy.}
+A two-level cache system based on SHA-256 signatures is implemented: in-process cache supports high-frequency read/write operations, while persistent cache provides cross-process mid-to-long-term storage. Time-to-live (TTL) values are customized for different weather data types (in seconds): current weather (600), minutely precipitation (300), hourly forecast (1200), etc. This design balances data freshness and cache hit rates.
+
+\textbf{Agent Instance Reuse.}
+LLM agents are cached using an LRU strategy based on output style and tool configurations. Cache hits save instantiation time during repeated requests.
+
+\textbf{State and Memory Management.}
+Dialogue context is stored using a sliding window of the latest 10 rounds, with a TTL of 1200 seconds for automatic cleanup. User profiles are incrementally merged to disk rather than overwritten entirely, preventing I/O spikes and reducing storage contention.
+
+\subsubsection{Latency Optimization}
+
+\textbf{Asynchronous and Concurrent Scheduling.}
+The previous pipeline execution model led to inefficient sequential tasking. This project introduces event-loop-based scheduling, enabling concurrent execution of RAG retrieval (300ms) and user profiling (800ms).
+
+\textbf{RAG Retrieval Optimization.}
+A timeout threshold of 800ms is enforced, along with fallback mechanisms to avoid blocking the main flow. Hybrid retrieval selects top-k candidates ($k \leq 5$) based on cosine similarity, followed by keyword re-ranking and deduplication. Average retrieval latency is maintained below 400ms.
+
+\textbf{Prompt Optimization.}
+A hierarchical prompt framework is adopted. Simple output styles are embedded directly in the system prompt, and tool-calling prompts are tightened to reduce redundant invocations of MCP tools, leading to lower response latency.
+
+\textbf{Streaming Output.}
+Leveraging LangGraph event streams and Server-Sent Events (SSE), the system enables token-level streaming. Users can view the first word immediately instead of waiting for the entire response, improving perceived responsiveness.
+
+
+\subsubsection{Overall Effectiveness}
+
+The performance evaluation is based on a controlled test set of 25 weather-related queries across 5 dialogue rounds. 
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{l *{4}{>{\centering\arraybackslash}X}}
+\toprule
+\textbf{Metric} & \textbf{Before} & \textbf{After} & \textbf{Change} & \textbf{Improvement} \\
+\midrule
+Average End-to-End Latency & 11.076 s & 6.441 s & -4.635 s & +41.9\% \\
+P95 End-to-End Latency & 17.867 s & 10.734 s & -7.133 s & +39.9\% \\
+Total MCP Tool Calls & 76 & 38 & -38 & -50.0\% \\
+Avg. Tool Calls per Query & 3.04 & 1.48 & -1.56 & -51.3\% \\
+Avg. Peak Memory Usage & 491.2 MB & 464.6 MB & -26.6 MB & -5.4\% \\
+Parallel Scheduling Coverage & 0\% & 76.0\% & +76.0\% & -- \\
+Agent Cache Hit Rate & 0\% & 92.0\% & +92.0\% & -- \\
+\bottomrule
+\end{tabularx}
+\caption{Performance Metrics Before and After Optimization}
+\label{tab:performance_comparison}
+\end{table}
+
+
+
+The experimental results demonstrate that the system exhibits significant improvements across key performance metrics after applying asynchronous scheduling, hierarchical caching, and tool-call control:
+
+\begin{itemize}
+    \item \textbf{Latency Reduction:} The average end-to-end response time decreased from 11.08 seconds to 6.44 seconds. The 95th percentile latency also dropped by nearly 40\%, contributing to a much smoother user experience.
+    
+    \item \textbf{Tool Call Optimization:} The average number of MCP tool invocations per question was reduced by over half (from 3.04 to 1.48), leading to a 50\% overall decrease in tool calls. This substantially reduces communication and execution overhead in remote calls.
+    
+    \item \textbf{Memory Efficiency:} Peak memory usage declined by 26.6 MB (5.4\%), indicating that strategies such as agent reuse and context control help curb resource inflation, albeit modestly.
+    
+    \item \textbf{Effective Parallelism and Caching:} Parallel scheduling coverage increased from 0\% to 76\%, successfully enabling asynchronous calls in high-latency modules such as user profiling and knowledge retrieval. Meanwhile, the agent cache hit rate surged to 92\%, significantly minimizing redundant agent instantiation and enhancing response efficiency.
+\end{itemize}
+
+In conclusion, these optimizations yield measurable gains in latency, resource utilization, and overall system throughput. The improvements lay a solid foundation for future scaling to multi-user environments, long-session dialogues, and stylistically diverse interactions.
+
+
+
+\section{Results}
+
+\subsection{Final System Overview}
+
+The final system combines LLM, MCP and RAG to build an intelligent weather assistant that can intelligently, efficiently, and personally answer users' weather questions. The system is organized in a modular way, with the main modules including: location retrieval, weather data query, RAG-based knowledge enhancement, user profile extraction and management, and personalized weather reports generated based on user preferences. The system's execution coordinator adopts LangGraph's execution workflow, supporting asynchronous MCP tool calls and streaming output, and supporting multi-language input.
+
+When the system receives a user query, the agent concurrently triggers RAG retrieval and local user profile reading. Based on the user profile, the system invokes the LLM to generate a response and, when necessary, triggers external tools (e.g., weather API, formatting tools) to return the desired response to the user. The overall system framework is shown in Figure 3.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/MCP.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comparison}
+\end{figure}
+
+
+
+
+
+\subsection{Final System Performance and Analysis}
+
+The final system has added many new features, but it remains a chatbot system and must not overlook the most fundamental user experience.
+To evaluate the effectiveness of the optimizations, we conducted evaluations based on a fixed test set (25 weather-related queries per round, see Appendix 2) across three client implementations: Baseline (the initial system using LLM and MCP); Unoptimized (including all features but without optimizations); Final System: the final system using LLM, MCP, and RAG) against several models (GPT-4o-mini, GPT-4o, GPT-4.1, GPT-3.5-turbo, DeepSeek v3.1).
+
+Performance metrics include: average latency, fastest/slowest response, P95 (95th percentile latency), and average tool call count; accuracy is evaluated by an independent judging agent (expert review based on LLM) scoring each response across five dimensions, and providing a success rate and average score (out of 5 points). Results are summarized in Table 4 and Figure 4.
+
+
+
+
+\begin{table*}[t]
+\centering
+\begin{tabularx}{\textwidth}{l X c c c c c}
+\toprule
+\textbf{Model} & \makecell[l]{\textbf{System}\\\textbf{Version}} & \makecell[c]{\textbf{Avg}\\\textbf{Latency (s)}} & \textbf{Fastest (s)} & \textbf{Slowest (s)} & \textbf{P95 (s)} & \makecell[c]{\textbf{Avg}\\\textbf{Tool Calls}} \\
+\midrule
+
+\multirow{3}{*}{GPT-4o-mini}
+& Baseline System    & 5.804  & 2.628 & 10.221  & 9.944   & 1.0 \\
+& Unoptimized System & 8.524  & 3.110 & 20.329  & 17.841  & 2.6 \\
+& Final System       & 6.650  & 1.362 & 17.149  & 14.111  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-4o}
+& Baseline System    & 6.207  & 2.341 & 54.432  & 11.179  & 1.1 \\
+& Unoptimized System & 6.497  & 2.878 & 28.063  & 9.841   & 1.7 \\
+& Final System       & 4.798  & 1.425 & 13.179  & 11.923  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-4.1}
+& Baseline System    & 4.306  & 2.522 & 11.178  & 10.286  & 1.1 \\
+& Unoptimized System & 5.922  & 2.483 & 22.031  & 11.918  & 2.2 \\
+& Final System       & 4.442  & 1.398 & 11.371  & 11.194  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-3.5-turbo}
+& Baseline System    & 3.178  & 1.851 & 5.568   & 5.568   & 0.7 \\
+& Unoptimized System & 6.730  & 2.418 & 26.447  & 26.447  & 2.2 \\
+& Final System       & 3.132  & 1.341 & 7.227   & 7.227   & 0.6 \\
+
+\midrule
+\multirow{3}{*}{DeepSeek v3.1}
+& Baseline System    & 21.806 & 8.827 & 118.274 & 54.024  & 0.8 \\
+& Unoptimized System & 25.363 & 9.405 & 61.794  & 51.467  & 2.0 \\
+& Final System       & 14.674 & 8.596 & 47.276  & 35.546  & 1.2 \\
+
+\bottomrule
+\end{tabularx}
+\caption{Performance comparison of GPT models across system versions (evaluated over 25 structured queries)}
+\label{tab:models-clients-performance}
+\end{table*}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/performance_comparison_charts.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comparison_charts}
+\end{figure}
+
+
+
+\subsection{System Demonstration}
+
+The front end of this project is based on Streamlit, which calls backend interfaces for dialogue interaction and supports token-level streaming output.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/MCP.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comp}
+\end{figure}
+
+
+
+
+
+
+\section{Discussion}
+
+
+This research has achieved promising progress in both system functionality and performance optimization, resulting in an intelligent weather assistant that integrates large language models (LLMs), the MCP protocol, and Retrieval-Augmented Generation (RAG). However, limitations still exist in terms of architecture design, evaluation methodology, and system trade-offs, revealing several directions for further investigation.
+
+\subsection{System Development Limitations}
+
+As this project was independently developed, the coverage of boundary conditions remains limited, and the diversity of user interactions has not been fully considered. For chatbot systems, users may ask a wide range of complex or abnormal questions, and the system must be robust enough to handle unstructured inputs. The current version lacks large-scale user testing or satisfaction surveys, making the system’s reliability in real-world usage scenarios yet to be fully validated.
+
+\subsection{Limitations of the MCP Protocol}
+While MCP does address the long-standing challenges of defining tools, the method itself has a significant drawback: it consumes a large number of tokens. Taking this system as an example, in the comparison between single-agent and multi-agent sections in this paper, a single query by a single agent consumes as many as 5,646 tokens, with the MCP tool alone accounting for 4,517 of those tokens—a very high figure. The system defines over 50 MCP tools, so each invocation of the large model also requires the transmission of tool descriptions, which incurs significant overhead. For LLM models with insufficient performance, MCP can easily cause the LLM to exceed token limits or generate errors. Therefore, when designing the system, balancing the performance of the large model with the complexity of the MCP server is critical.
+
+\subsection{Design Trade-Off: Single Agent vs. Multi-Agent Architecture}
+
+This project explored and compared both single-agent and multi-agent architectures. The results showed that the multi-agent design did not lead to performance improvements; instead, it significantly increased response latency, with delays tripling or even quadrupling in some cases. This is primarily due to the nature of the task: core functions such as location resolution, weather retrieval, and response generation form a highly sequential pipeline. In this structure, splitting into multiple agents brings communication overhead without the benefits of parallel execution.
+
+Moreover, chatbot applications are sensitive to response latency. A complex multi-agent system not only increases the development and debugging burden but also negatively impacts user experience. Therefore, the single-agent architecture was found to be more suitable and efficient for this scenario.
+
+Nonetheless, multi-agent systems can be advantageous in more complex or decoupled environments, such as integrated platforms for weather, travel booking, routing, and payment services. In those cases, agents can specialize in different tasks and operate in parallel, improving scalability and throughput. Relying solely on a single-agent approach in such contexts may lead to hallucinations or performance bottlenecks due to context overload or LLM limitations.
+
+\subsection{Challenges in System Evaluation}
+
+As a weather-specific assistant, the system outputs factual weather or air quality data, sometimes supplemented by LLM-based responses. This makes performance evaluation particularly challenging. While existing LLM benchmarks (e.g., LangChain Benchmarks) offer structured tasks such as Tool Usage and RAG reasoning, these benchmarks are generally domain-agnostic and do not cover weather-related queries. As such, they are not well-suited to evaluate the system’s domain-specific accuracy or interaction quality.
+
+Although building custom evaluation datasets inspired by existing benchmarks is possible, the results may lack comparability and objectivity. A promising future direction is the development of weather-domain-specific evaluation metrics and datasets to enable more rigorous testing and analysis.
+
+\subsection{Evaluation of RAG Effectiveness and Limitations}
+
+This study conducted initial experiments on different chunking strategies for RAG, but it did not systematically quantify the performance gain brought by RAG itself. In general weather Q\&A tasks, LLMs can often provide accurate answers even without retrieval, due to their pretraining on large-scale open-source corpora such as Wikipedia. Therefore, the incremental benefit of RAG is difficult to measure in such scenarios.
+
+However, RAG is valuable when addressing proprietary knowledge that was not included in the model's pretraining. For instance, this project includes documentation of system functions and tool usage that LLMs have not seen before. RAG allows the model to correctly answer these queries using the knowledge base. Furthermore, grounding responses in retrieved content helps suppress hallucinations and improves factual consistency.
+
+\subsection{Trade-Off Between Functionality and Performance}
+
+Balancing feature richness and system responsiveness is a key challenge. After adding modules for user profiling, multi-style formatting, multilingual input, and streaming output, the system’s response time increased significantly compared to the baseline. Although performance was later improved through caching, streaming, and prompt tuning, the final version still lags slightly behind the minimal baseline in responsiveness.
+
+Prompt engineering was found to be a major factor affecting system stability and efficiency. During debugging, several issues were traced back to ambiguous or poorly constructed prompts, which led to unstable output or inconsistent tool usage. In the optimization stage, well-designed prompts helped focus the model’s attention, reduce unnecessary computation, and improve overall performance. This highlights the importance of modular, testable prompt templates in future system iterations.
+
+
+
+
+
+\section{Conclusions}
+
+
+
+
+
+
+% References
+\newpage
+\section{Appendix}
 
 
 

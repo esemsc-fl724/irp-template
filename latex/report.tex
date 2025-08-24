@@ -15,6 +15,11 @@
 \usepackage{rotating}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{pgfplotstable}
+\usepackage{subcaption}
+\usepackage{makecell}
 
 
 
@@ -105,7 +110,7 @@ The following deliverables are expected from the project:
 The system for this project adopts a microservice architecture and uses the Model Context Protocol (MCP) to manage various tools and services. The core framework is built on a combination of LLM, MCP, and RAG, which shows the popular trends in AI Agent. The system is divided into three layers, each with clear responsibilities and interface definitions, in accordance with back-end development standards.
 
 
-\textbf{Agent layer (MCP client):}
+\textbf{Agent layer:}
 This layer uses models such as OpenAI GPT~\cite{OpenAI2025} or DeepSeek~\cite{DeepSeek2025} as the main reasoning engine. The main reason for this choice is that it supports Function Calling, which simplifies tool invocation. This layer is responsible for understanding the intentions of the users, planning the execution steps, and coordinating calls to external tools. The entire reasoning process is implemented using LangGraph~\cite{LangGraph2025}, following the ReAct-style process, which has good traceability and execution control capabilities. Using the locally deployed ChromaDB vector database~\cite{Chroma2025} to build weather knowledge RAG, thereby improving the accuracy of system responses.
 
 \textbf{MCP server layer:}
@@ -171,7 +176,6 @@ This project conducted experimental evaluations of agent architecture selection.
 
 \begin{table}[ht]
 \centering
-\caption{Cross-Model Comparison of Single-Agent vs Multi-Agent (averaged over 10 runs on 5 queries)}
 \begin{tabularx}{\textwidth}{l l *{2}{>{\centering\arraybackslash}X}}
 \toprule
 \textbf{Model} & \textbf{Metric} & \textbf{Single Agent} & \textbf{Multi-Agent} \\
@@ -189,6 +193,7 @@ This project conducted experimental evaluations of agent architecture selection.
 & Execution Success       & 100\% & 98\% \\
 \bottomrule
 \end{tabularx}
+\caption{Cross-Model Comparison of Single-Agent vs Multi-Agent (averaged over 10 runs on 5 queries)}
 \end{table}
 
 The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of success rate.
@@ -345,7 +350,6 @@ The performance evaluation is based on a controlled test set of 25 weather-relat
 
 \begin{table}[h!]
 \centering
-\caption{Performance Metrics Before and After Optimization}
 \begin{tabularx}{\textwidth}{l *{4}{>{\centering\arraybackslash}X}}
 \toprule
 \textbf{Metric} & \textbf{Before} & \textbf{After} & \textbf{Change} & \textbf{Improvement} \\
@@ -359,8 +363,11 @@ Parallel Scheduling Coverage & 0\% & 76.0\% & +76.0\% & -- \\
 Agent Cache Hit Rate & 0\% & 92.0\% & +92.0\% & -- \\
 \bottomrule
 \end{tabularx}
+\caption{Performance Metrics Before and After Optimization}
 \label{tab:performance_comparison}
 \end{table}
+
+
 
 The experimental results demonstrate that the system exhibits significant improvements across key performance metrics after applying asynchronous scheduling, hierarchical caching, and tool-call control:
 
@@ -382,34 +389,98 @@ In conclusion, these optimizations yield measurable gains in latency, resource u
 
 \subsection{Final System Overview}
 
-The final system integrates Large Language Models (LLMs), the MCP protocol, and Retrieval-Augmented Generation (RAG) to form an intelligent weather assistant that unifies multiple intelligent components into a cohesive service. It is capable of responding to user queries in an intelligent, efficient, and personalized manner.
+The final system combines LLM, MCP and RAG to build an intelligent weather assistant that can intelligently, efficiently, and personally answer users' weather questions. The system is organized in a modular way, with the main modules including: location retrieval, weather data query, RAG-based knowledge enhancement, user profile extraction and management, and personalized weather reports generated based on user preferences. The system's execution coordinator adopts LangGraph's execution workflow, supporting asynchronous MCP tool calls and streaming output, and supporting multi-language input.
 
-Upon receiving a user query, the agent interprets the task and initiates RAG-based retrieval and user profile loading in parallel. Based on the question, it extracts relevant user profile features and then determines the appropriate processing path—either invoking MCP tools or combining LLM and RAG directly. Finally, the LLM generates a response, which is returned to the user. The overall system architecture is illustrated in Figure.
+When the system receives a user query, the agent concurrently triggers RAG retrieval and local user profile reading. Based on the user profile, the system invokes the LLM to generate a response and, when necessary, triggers external tools (e.g., weather API, formatting tools) to return the desired response to the user. The overall system framework is shown in Figure 3.
 
-The chatbot is constructed in a modular fashion, integrating components for weather data retrieval, air quality monitoring, RAG-based contextual augmentation, multi-style natural language generation, and user profiling. A central coordinator orchestrates the interaction among these modules following a LangGraph-based execution flow, with support for asynchronous MCP tool invocation and streaming output. The system also supports multilingual input detection and efficient state management via a caching mechanism.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/MCP.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comparison}
+\end{figure}
 
-Key features of the final system include:
-\begin{itemize}
-    \item Real-time weather and air quality data retrieval via the OpenWeather API
-    \item Automatic extraction of user profiles with support for emotion and preference analysis
-    \item Personalized weather reporting tailored to user mood and stylistic preferences
-    \item Contextual enhancement using RAG over a weather knowledge base
-\end{itemize}
+
 
 
 
 \subsection{Final System Performance and Analysis}
 
-The final system added many new features, but it is still a chatbot system, and we must not forget the most basic user experience. Therefore, this section will compare the final system with the baseline system to evaluate performance improvements and overhead.
+The final system has added many new features, but it remains a chatbot system and must not overlook the most fundamental user experience.
+To evaluate the effectiveness of the optimizations, we conducted evaluations based on a fixed test set (25 weather-related queries per round, see Appendix 2) across three client implementations: Baseline (the initial system using LLM and MCP); Unoptimized (including all features but without optimizations); Final System: the final system using LLM, MCP, and RAG) against several models (GPT-4o-mini, GPT-4o, GPT-4.1, GPT-3.5-turbo, DeepSeek v3.1).
 
-To comprehensively evaluate the performance and capability of the final system, we developed a structured testing methodology that combines quantitative benchmarking with qualitative response evaluation. A custom-designed test suite containing 25 real-world weather-related queries was constructed, covering seven functional categories: core weather services, personalization, context awareness, knowledge retrieval, complex queries, error handling, and system optimization. Each query was executed across three different client implementations—baseline MCP, early LangGraph integration, and the fully optimized LangGraph system—to ensure fair and systematic comparisons.
+Performance metrics include: average latency, fastest/slowest response, P95 (95th percentile latency), and average tool call count; accuracy is evaluated by an independent judging agent (expert review based on LLM) scoring each response across five dimensions, and providing a success rate and average score (out of 5 points). Results are summarized in Table 4 and Figure 4.
 
-Key performance metrics such as end-to-end response latency, memory usage, tool call efficiency, and success rate were recorded, along with automated response quality scores across five dimensions: accuracy, completeness, relevance, formatting, and usefulness. All tests were performed in a controlled environment with standardized hardware, stable API endpoints, and isolated user sessions. This evaluation framework enabled a rigorous performance analysis and identified specific areas of optimization across system iterations.
+
+
+
+\begin{table*}[t]
+\centering
+\label{tab:models-clients-performance}
+\begin{tabularx}{\textwidth}{l X c c c c c}
+\toprule
+\textbf{Model} & \textbf{System Version} & \makecell[c]{\textbf{Avg}\\\textbf{Latency (s)}} & \textbf{Fastest (s)} & \textbf{Slowest (s)} & \textbf{P95 (s)} & \makecell[c]{\textbf{Avg}\\\textbf{Tool Calls}} \\
+\midrule
+
+\multirow{3}{*}{GPT-4o-mini}
+& Baseline     & 5.804  & 2.628 & 10.221  & 9.944   & 1.0 \\
+& Unoptimized  & 8.524  & 3.110 & 20.329  & 17.841  & 2.6 \\
+& Final        & 6.650  & 1.362 & 17.149  & 14.111  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-4o}
+& Baseline     & 6.207  & 2.341 & 54.432  & 11.179  & 1.1 \\
+& Unoptimized  & 6.497  & 2.878 & 28.063  & 9.841   & 1.7 \\
+& Final        & 4.798  & 1.425 & 13.179  & 11.923  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-4.1}
+& Baseline     & 4.306  & 2.522 & 11.178  & 10.286  & 1.1 \\
+& Unoptimized  & 5.922  & 2.483 & 22.031  & 11.918  & 2.2 \\
+& Final        & 4.442  & 1.398 & 11.371  & 11.194  & 0.8 \\
+
+\midrule
+\multirow{3}{*}{GPT-3.5-turbo}
+& Baseline     & 3.878  & 1.851 & 10.568   & 10.568   & 1.2 \\
+& Unoptimized  & 7.730  & 2.418 & 29.447  & 29.447  & 2.8 \\
+& Final        & 4.132  & 1.341 & 11.227   & 11.227   & 1.0 \\
+
+\midrule
+\multirow{3}{*}{DeepSeek v3.1}
+& Baseline     & 21.806 & 8.827 & 118.274 & 54.024  & 0.8 \\
+& Unoptimized  & 25.363 & 9.405 & 61.794  & 51.467  & 2.0 \\
+& Final        & 14.674 & 8.596 & 47.276  & 35.546  & 1.2 \\
+
+\bottomrule
+\end{tabularx}
+\caption{Performance comparison of GPT models across system versions (evaluated over 25 structured queries)}
+\end{table*}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/performance_comparison_charts.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comparison_charts}
+\end{figure}
+
+As can be seen from the test results, the final system achieved the best overall performance: it struck a good balance between latency and accuracy across multiple models. For example, on GPT-4.1, the final system achieved a low average latency (4.442 s) while maintaining a high accuracy rate (96\%) and average score (4.808/5).
+
+In contrast, the Baseline system, due to its limited functionality and simple prompts, performs exceptionally well in terms of latency but has the lowest accuracy. The unoptimized system, while introducing a full set of features and improving answer quality, experiences a significant increase in average latency, indicating that increased system complexity significantly prolongs response times, making performance optimization necessary.
+
+Additionally, the baseline performance of different LLMs impacts the final performance: on higher-performing models (e.g., GPT-4o-mini, GPT-4o, GPT-4.1), the final system maintains relatively fast response speeds while providing high-quality responses; on weaker models, response quality decreases, and errors or inaccuracies are more likely to occur.
+
+Overall, the test results indicate that the functional expansions and optimizations achieved through this project have indeed brought significant improvements in both latency and accuracy. These improvements not only enhance the user experience but also lay the foundation for future expansions (such as multi-user deployment and support for longer dialogue contexts).
+
 
 \subsection{System Demonstration}
 
 The front end of this project is based on Streamlit, which calls backend interfaces for dialogue interaction and supports token-level streaming output.
-
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{latex/figures/MCP.png}
+    \caption{Comparison of Performance and Tool Usage Across System Versions}
+    \label{fig:performance_comp}
+\end{figure}
 
 
 
@@ -424,6 +495,9 @@ This research has achieved promising progress in both system functionality and p
 \subsection{System Development Limitations}
 
 As this project was independently developed, the coverage of boundary conditions remains limited, and the diversity of user interactions has not been fully considered. For chatbot systems, users may ask a wide range of complex or abnormal questions, and the system must be robust enough to handle unstructured inputs. The current version lacks large-scale user testing or satisfaction surveys, making the system’s reliability in real-world usage scenarios yet to be fully validated.
+
+\subsection{Limitations of the MCP Protocol}
+While MCP does address the long-standing challenges of defining tools, the method itself has a significant drawback: it consumes a large number of tokens. Taking this system as an example, in the comparison between single-agent and multi-agent sections in this paper, a single query by a single agent consumes as many as 5,646 tokens, with the MCP tool alone accounting for 4,517 of those tokens—a very high figure. The system defines over 50 MCP tools, so each invocation of the large model also requires the transmission of tool descriptions, which incurs significant overhead. For LLM models with insufficient performance, MCP can easily cause the LLM to exceed token limits or generate errors. Therefore, when designing the system, balancing the performance of the large model with the complexity of the MCP server is critical.
 
 \subsection{Design Trade-Off: Single Agent vs. Multi-Agent Architecture}
 
