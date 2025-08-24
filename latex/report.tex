@@ -13,6 +13,9 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{rotating}
+\usepackage{booktabs}
+\usepackage{tabularx}
+
 
 
 % Directory where I saved my figures.
@@ -39,7 +42,7 @@
 \newpage   % Break page, separate page after table of contents
 
 \section*{AI Acknowledgement Statement}
-I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) to support my learning and understanding of large language models (LLMS), as well as to debug and test the code of my projects. This generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
+I used OpenAI’s ChatGPT‑4o (https://chat.openai.com/) and Anthropic’s Claude 4 (https://claude.ai/) to support my learning and understanding of large language models (LLMs), as well as to assist in the development, debugging, and testing of my project code. These generative AI tool supported my learning process, but the submitted work is my own and it reflects my own understanding and effort as I declared by signing the Academic Integrity Declaration.
 
 % Abstract
 \section*{Abstract}
@@ -99,17 +102,14 @@ The following deliverables are expected from the project:
 \section{Methodology}
 \subsection{System Architecture and Technology Stack}
 
-The system for this project adopts a microservice architecture and uses the Model Context Protocol (MCP) to manage various tools and services. The core framework is built on a combination of LLM, MCP, and RAG, which shows the popular trends in AI Agent. The system is divided into four core layers, each with clear responsibilities and interface definitions, in accordance with back-end development standards.
+The system for this project adopts a microservice architecture and uses the Model Context Protocol (MCP) to manage various tools and services. The core framework is built on a combination of LLM, MCP, and RAG, which shows the popular trends in AI Agent. The system is divided into three layers, each with clear responsibilities and interface definitions, in accordance with back-end development standards.
 
 
-\textbf{LLM-driven layer (Agent):}
-This layer uses models such as OpenAI GPT~\cite{OpenAI2025} or DeepSeek~\cite{DeepSeek2025} as the main reasoning engine. The main reason for this choice is that it supports Function Calling, which simplifies tool invocation. This layer is responsible for understanding the intentions of the users, planning the execution steps, and coordinating calls to external tools. The entire reasoning process is implemented using LangGraph~\cite{LangGraph2025}, following ReAct-style process, which has good traceability and execution control capabilities.
+\textbf{Agent layer (MCP client):}
+This layer uses models such as OpenAI GPT~\cite{OpenAI2025} or DeepSeek~\cite{DeepSeek2025} as the main reasoning engine. The main reason for this choice is that it supports Function Calling, which simplifies tool invocation. This layer is responsible for understanding the intentions of the users, planning the execution steps, and coordinating calls to external tools. The entire reasoning process is implemented using LangGraph~\cite{LangGraph2025}, following the ReAct-style process, which has good traceability and execution control capabilities. Using the locally deployed ChromaDB vector database~\cite{Chroma2025} to build weather knowledge RAG, thereby improving the accuracy of system responses.
 
-\textbf{MCP tools layer (MCP server):}
+\textbf{MCP server layer:}
 It is the core integration layer of the system. Weather-related tools are mainly managed through the MCP protocol. This layer supports dynamic discovery, registration, and execution of tools, providing a standardized tool interface for LLM agents.
-
-\textbf{RAG knowledge layer:}
-Using a locally deployed ChromaDB vector database~\cite{Chroma2025}, build collections such as weather knowledge and city information. Combine the Sentence Transformers embedding model to achieve fast semantic retrieval and knowledge enhancement, thus improving the accuracy of system responses.
 
 
 \textbf{User interface layer:}
@@ -171,25 +171,24 @@ This project conducted experimental evaluations of agent architecture selection.
 
 \begin{table}[ht]
 \centering
-
-\begin{tabular}{|c|c|c|c|}
-\hline
+\caption{Cross-Model Comparison of Single-Agent vs Multi-Agent (averaged over 10 runs on 5 queries)}
+\begin{tabularx}{\textwidth}{l l *{2}{>{\centering\arraybackslash}X}}
+\toprule
 \textbf{Model} & \textbf{Metric} & \textbf{Single Agent} & \textbf{Multi-Agent} \\
-\hline
-\multirow{4}{*}{GPT-4o-mini} 
-& Total Response Time (s)     & 4.62   & 12.14 \\
-& Token Usage           & 5646   & 11875 \\
-& API Calls             & 2.0    & 9.33 \\
-& Execution Success     & 100\%  & 100\% \\
-\hline
-\multirow{4}{*}{DeepSeek-V3} 
-& Total Response Time (s)     & 12.12  & 33.45 \\
-& Token Usage           & 9275   & 21059 \\
-& API Calls             & 2.0    & 9.67 \\
-& Execution Success     & 100\%  & 98\% \\
-\hline
-\end{tabular}
-{\small\caption{Cross-Model Comparison of Single-Agent and Multi-Agent Performance: Averaged Results Over 10 Runs on 5 Weather-Related Queries}}
+\midrule
+\multirow{4}{*}{GPT-4o-mini}
+& Total Response Time (s) & 4.62  & 12.14 \\
+& Token Usage             & 5646  & 11875 \\
+& API Calls               & 2.0   & 9.33 \\
+& Execution Success       & 100\% & 100\% \\
+\midrule
+\multirow{4}{*}{DeepSeek-V3.1}
+& Total Response Time (s) & 12.12 & 33.45 \\
+& Token Usage             & 9275  & 21059 \\
+& API Calls               & 2.0   & 9.67 \\
+& Execution Success       & 100\% & 98\% \\
+\bottomrule
+\end{tabularx}
 \end{table}
 
 The experimental results show that in the context of this project, compared with single agents, multi-agent architectures have longer response times and higher token consumption in single-round queries, and do not show any obvious advantages in terms of success rate.
@@ -270,7 +269,10 @@ To strengthen the system’s domain accuracy and contextual reasoning, we incorp
 
 \subsubsection{Embedding Strategy and Chunk-size Optimisation}
 
-Chunk size was tuned experimentally. With 300 tokens per chunk, the system achieves the best balance of accuracy ($\approx$ 85\%), knowledge coverage ($>$ 93\%) and latency ($\approx$ 1.2 s). Smaller chunks ($\leq$ 200 tokens) lower latency but harm recall, while larger chunks ($\geq$ 500 tokens) slow retrieval without significant accuracy gains. Accordingly, the default setting is 300 tokens with zero overlap, embedded via the MiniLM model described above.
+Efficient document chunking plays a critical role in optimizing retrieval performance. The choice of chunking strategy not only affects the relevance of retrieved content but also impacts the overall accuracy of the system.
+
+\textbf{Experimental Setup:}  
+After constructing and embedding the knowledge base, we conducted a systematic evaluation of two key parameters: chunk size and overlap. The goal was to identify the configuration that maintains semantic coherence while maximizing retrieval effectiveness. Using the collected weather-related corpus as input, we tested ten configurations: no chunking, and chunk sizes of 200, 400, 800, and 1300 tokens — each further evaluated with overlaps of 0, 50, and 100 tokens. All configurations were encoded into vectors using the \texttt{all-MiniLM-L6-v2} model (384 dimensions).
 
 \begin{figure}[H]
     \centering
@@ -278,6 +280,16 @@ Chunk size was tuned experimentally. With 300 tokens per chunk, the system achie
     \caption{Comparison of Mean Similarity Across Different Chunking Strategies}
     \label{fig:all_similarity_comparison}
 \end{figure}
+
+\textbf{Results and Analysis:}  
+The configuration with a chunk size of 200 tokens and no overlap (\texttt{chunk\_200\_0}) yielded the highest mean similarity score of 0.5480 — an improvement of approximately 2.8\% over the baseline with no chunking.  
+Adding a 50-token overlap to the same chunk size (\texttt{chunk\_200\_50}) did not lead to a significant gain (mean similarity of 0.5452), but increased the number of vectors stored.  
+When chunk sizes exceeded 400 tokens, a consistent decline in mean similarity was observed (ranging from 0.5365 to 0.5293). This drop is attributed to semantic interference across segment boundaries. Notably, overlapping tokens had a more positive impact under larger chunk sizes, helping to partially mitigate the semantic loss.
+
+\textbf{Conclusion:}  
+Balancing accuracy and computational efficiency, the final system adopts a chunk size of 200 tokens with zero overlap for vectorization. This configuration preserves semantic completeness while achieving favorable trade-offs in retrieval latency and storage cost.
+
+
 
 \subsubsection{Retrieval and Intelligent Routing}
 
@@ -293,26 +305,167 @@ The RAG layer works in parallel with the user-profile component. Before formulat
 \end{itemize}
 The same mechanism auto-fills missing information in elliptical queries, for example by inserting the current city or metric, so responses remain coherent and personalised.
 
-\subsubsection{Module Benefits and Evaluation}
-
 Benchmarking shows that, on multilingual, cross-domain questions rich in technical terms, the RAG-enabled assistant consistently outperforms a plain LLM baseline. Gains are observed in factual accuracy, semantic depth, and completeness of explanation.
 
 
 \subsection{Performance Optimization and Engineering Trade-offs}
 
+Currently, this project has added many additional features on top of the baseline, gradually transforming the system into a personalized weather assistant agent. Of course, this comes at a cost, the most obvious being a slowdown in single-round query speed. To meet engineering requirements for sub-second response times and multi-concurrent access, the system requires some optimization. This section implements multi-level optimizations across multiple dimensions and conducts a quantitative analysis of potential trade-offs between performance and accuracy, as well as complexity and maintainability.
 
 
+\subsubsection{Caching and Memory Optimization}
+
+\textbf{Hierarchical Caching Strategy.}
+A two-level cache system based on SHA-256 signatures is implemented: in-process cache supports high-frequency read/write operations, while persistent cache provides cross-process mid-to-long-term storage. Time-to-live (TTL) values are customized for different weather data types (in seconds): current weather (600), minutely precipitation (300), hourly forecast (1200), etc. This design balances data freshness and cache hit rates.
+
+\textbf{Agent Instance Reuse.}
+LLM agents are cached using an LRU strategy based on output style and tool configurations. Cache hits save instantiation time during repeated requests.
+
+\textbf{State and Memory Management.}
+Dialogue context is stored using a sliding window of the latest 10 rounds, with a TTL of 1200 seconds for automatic cleanup. User profiles are incrementally merged to disk rather than overwritten entirely, preventing I/O spikes and reducing storage contention.
+
+\subsubsection{Latency Optimization}
+
+\textbf{Asynchronous and Concurrent Scheduling.}
+The previous pipeline execution model led to inefficient sequential tasking. This project introduces event-loop-based scheduling, enabling concurrent execution of RAG retrieval (300ms) and user profiling (800ms).
+
+\textbf{RAG Retrieval Optimization.}
+A timeout threshold of 800ms is enforced, along with fallback mechanisms to avoid blocking the main flow. Hybrid retrieval selects top-k candidates ($k \leq 5$) based on cosine similarity, followed by keyword re-ranking and deduplication. Average retrieval latency is maintained below 400ms.
+
+\textbf{Prompt Optimization.}
+A hierarchical prompt framework is adopted. Simple output styles are embedded directly in the system prompt, and tool-calling prompts are tightened to reduce redundant invocations of MCP tools, leading to lower response latency.
+
+\textbf{Streaming Output.}
+Leveraging LangGraph event streams and Server-Sent Events (SSE), the system enables token-level streaming. Users can view the first word immediately instead of waiting for the entire response, improving perceived responsiveness.
 
 
+\subsubsection{Overall Effectiveness}
 
+The performance evaluation is based on a controlled test set of 25 weather-related queries across 5 dialogue rounds. 
+
+\begin{table}[h!]
+\centering
+\caption{Performance Metrics Before and After Optimization}
+\begin{tabularx}{\textwidth}{l *{4}{>{\centering\arraybackslash}X}}
+\toprule
+\textbf{Metric} & \textbf{Before} & \textbf{After} & \textbf{Change} & \textbf{Improvement} \\
+\midrule
+Average End-to-End Latency & 11.076 s & 6.441 s & -4.635 s & +41.9\% \\
+P95 End-to-End Latency & 17.867 s & 10.734 s & -7.133 s & +39.9\% \\
+Total MCP Tool Calls & 76 & 38 & -38 & -50.0\% \\
+Avg. Tool Calls per Query & 3.04 & 1.48 & -1.56 & -51.3\% \\
+Avg. Peak Memory Usage & 491.2 MB & 464.6 MB & -26.6 MB & -5.4\% \\
+Parallel Scheduling Coverage & 0\% & 76.0\% & +76.0\% & -- \\
+Agent Cache Hit Rate & 0\% & 92.0\% & +92.0\% & -- \\
+\bottomrule
+\end{tabularx}
+\label{tab:performance_comparison}
+\end{table}
+
+The experimental results demonstrate that the system exhibits significant improvements across key performance metrics after applying asynchronous scheduling, hierarchical caching, and tool-call control:
+
+\begin{itemize}
+    \item \textbf{Latency Reduction:} The average end-to-end response time decreased from 11.08 seconds to 6.44 seconds. The 95th percentile latency also dropped by nearly 40\%, contributing to a much smoother user experience.
+    
+    \item \textbf{Tool Call Optimization:} The average number of MCP tool invocations per question was reduced by over half (from 3.04 to 1.48), leading to a 50\% overall decrease in tool calls. This substantially reduces communication and execution overhead in remote calls.
+    
+    \item \textbf{Memory Efficiency:} Peak memory usage declined by 26.6 MB (5.4\%), indicating that strategies such as agent reuse and context control help curb resource inflation, albeit modestly.
+    
+    \item \textbf{Effective Parallelism and Caching:} Parallel scheduling coverage increased from 0\% to 76\%, successfully enabling asynchronous calls in high-latency modules such as user profiling and knowledge retrieval. Meanwhile, the agent cache hit rate surged to 92\%, significantly minimizing redundant agent instantiation and enhancing response efficiency.
+\end{itemize}
+
+In conclusion, these optimizations yield measurable gains in latency, resource utilization, and overall system throughput. The improvements lay a solid foundation for future scaling to multi-user environments, long-session dialogues, and stylistically diverse interactions.
 
 
 
 \section{Results}
 
+\subsection{Final System Overview}
+
+The final system integrates Large Language Models (LLMs), the MCP protocol, and Retrieval-Augmented Generation (RAG) to form an intelligent weather assistant that unifies multiple intelligent components into a cohesive service. It is capable of responding to user queries in an intelligent, efficient, and personalized manner.
+
+Upon receiving a user query, the agent interprets the task and initiates RAG-based retrieval and user profile loading in parallel. Based on the question, it extracts relevant user profile features and then determines the appropriate processing path—either invoking MCP tools or combining LLM and RAG directly. Finally, the LLM generates a response, which is returned to the user. The overall system architecture is illustrated in Figure.
+
+The chatbot is constructed in a modular fashion, integrating components for weather data retrieval, air quality monitoring, RAG-based contextual augmentation, multi-style natural language generation, and user profiling. A central coordinator orchestrates the interaction among these modules following a LangGraph-based execution flow, with support for asynchronous MCP tool invocation and streaming output. The system also supports multilingual input detection and efficient state management via a caching mechanism.
+
+Key features of the final system include:
+\begin{itemize}
+    \item Real-time weather and air quality data retrieval via the OpenWeather API
+    \item Automatic extraction of user profiles with support for emotion and preference analysis
+    \item Personalized weather reporting tailored to user mood and stylistic preferences
+    \item Contextual enhancement using RAG over a weather knowledge base
+\end{itemize}
+
+
+
+\subsection{Final System Performance and Analysis}
+
+The final system added many new features, but it is still a chatbot system, and we must not forget the most basic user experience. Therefore, this section will compare the final system with the baseline system to evaluate performance improvements and overhead.
+
+To comprehensively evaluate the performance and capability of the final system, we developed a structured testing methodology that combines quantitative benchmarking with qualitative response evaluation. A custom-designed test suite containing 25 real-world weather-related queries was constructed, covering seven functional categories: core weather services, personalization, context awareness, knowledge retrieval, complex queries, error handling, and system optimization. Each query was executed across three different client implementations—baseline MCP, early LangGraph integration, and the fully optimized LangGraph system—to ensure fair and systematic comparisons.
+
+Key performance metrics such as end-to-end response latency, memory usage, tool call efficiency, and success rate were recorded, along with automated response quality scores across five dimensions: accuracy, completeness, relevance, formatting, and usefulness. All tests were performed in a controlled environment with standardized hardware, stable API endpoints, and isolated user sessions. This evaluation framework enabled a rigorous performance analysis and identified specific areas of optimization across system iterations.
+
+\subsection{System Demonstration}
+
+The front end of this project is based on Streamlit, which calls backend interfaces for dialogue interaction and supports token-level streaming output.
+
+
+
+
+
+
+
 \section{Discussion}
 
+
+This research has achieved promising progress in both system functionality and performance optimization, resulting in an intelligent weather assistant that integrates large language models (LLMs), the MCP protocol, and Retrieval-Augmented Generation (RAG). However, limitations still exist in terms of architecture design, evaluation methodology, and system trade-offs, revealing several directions for further investigation.
+
+\subsection{System Development Limitations}
+
+As this project was independently developed, the coverage of boundary conditions remains limited, and the diversity of user interactions has not been fully considered. For chatbot systems, users may ask a wide range of complex or abnormal questions, and the system must be robust enough to handle unstructured inputs. The current version lacks large-scale user testing or satisfaction surveys, making the system’s reliability in real-world usage scenarios yet to be fully validated.
+
+\subsection{Design Trade-Off: Single Agent vs. Multi-Agent Architecture}
+
+This project explored and compared both single-agent and multi-agent architectures. The results showed that the multi-agent design did not lead to performance improvements; instead, it significantly increased response latency, with delays tripling or even quadrupling in some cases. This is primarily due to the nature of the task: core functions such as location resolution, weather retrieval, and response generation form a highly sequential pipeline. In this structure, splitting into multiple agents brings communication overhead without the benefits of parallel execution.
+
+Moreover, chatbot applications are sensitive to response latency. A complex multi-agent system not only increases the development and debugging burden but also negatively impacts user experience. Therefore, the single-agent architecture was found to be more suitable and efficient for this scenario.
+
+Nonetheless, multi-agent systems can be advantageous in more complex or decoupled environments, such as integrated platforms for weather, travel booking, routing, and payment services. In those cases, agents can specialize in different tasks and operate in parallel, improving scalability and throughput. Relying solely on a single-agent approach in such contexts may lead to hallucinations or performance bottlenecks due to context overload or LLM limitations.
+
+\subsection{Challenges in System Evaluation}
+
+As a weather-specific assistant, the system outputs factual weather or air quality data, sometimes supplemented by LLM-based responses. This makes performance evaluation particularly challenging. While existing LLM benchmarks (e.g., LangChain Benchmarks) offer structured tasks such as Tool Usage and RAG reasoning, these benchmarks are generally domain-agnostic and do not cover weather-related queries. As such, they are not well-suited to evaluate the system’s domain-specific accuracy or interaction quality.
+
+Although building custom evaluation datasets inspired by existing benchmarks is possible, the results may lack comparability and objectivity. A promising future direction is the development of weather-domain-specific evaluation metrics and datasets to enable more rigorous testing and analysis.
+
+\subsection{Evaluation of RAG Effectiveness and Limitations}
+
+This study conducted initial experiments on different chunking strategies for RAG, but it did not systematically quantify the performance gain brought by RAG itself. In general weather Q\&A tasks, LLMs can often provide accurate answers even without retrieval, due to their pretraining on large-scale open-source corpora such as Wikipedia. Therefore, the incremental benefit of RAG is difficult to measure in such scenarios.
+
+However, RAG is valuable when addressing proprietary knowledge that was not included in the model's pretraining. For instance, this project includes documentation of system functions and tool usage that LLMs have not seen before. RAG allows the model to correctly answer these queries using the knowledge base. Furthermore, grounding responses in retrieved content helps suppress hallucinations and improves factual consistency.
+
+\subsection{Trade-Off Between Functionality and Performance}
+
+Balancing feature richness and system responsiveness is a key challenge. After adding modules for user profiling, multi-style formatting, multilingual input, and streaming output, the system’s response time increased significantly compared to the baseline. Although performance was later improved through caching, streaming, and prompt tuning, the final version still lags slightly behind the minimal baseline in responsiveness.
+
+Prompt engineering was found to be a major factor affecting system stability and efficiency. During debugging, several issues were traced back to ambiguous or poorly constructed prompts, which led to unstable output or inconsistent tool usage. In the optimization stage, well-designed prompts helped focus the model’s attention, reduce unnecessary computation, and improve overall performance. This highlights the importance of modular, testable prompt templates in future system iterations.
+
+
+
+
+
 \section{Conclusions}
+
+
+
+
+
+
+% References
+\newpage
+\section{Appendix}
+
 
 
 
